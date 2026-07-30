@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "582158608949",
+    "project_id": "split-trip-c2941",
+    "storage_bucket": "split-trip-c2941.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:582158608949:android:357c2bb01e929acf9c1f7c",
+        "android_client_info": {
+          "package_name": "app.rudara.splittrip"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "582158608949-uhkn9149srdk9fh2kbci5jsdt7j69thp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.rudara.splittrip",
+            "certificate_hash": "9000162b9ae848db9a546bc08ccbee094ef9676b"
+          }
+        },
+        {
+          "client_id": "582158608949-9diqhcke4927r4vdjfnt74fbj7j3d0le.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJgPVxt3O-NkaAN2PRR22_KOrX3ZYLBCI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "582158608949-9diqhcke4927r4vdjfnt74fbj7j3d0le.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "582158608949-h38g652q973onj7ot6tkunh883vq6ol4.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "app.rudara.splittrip"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

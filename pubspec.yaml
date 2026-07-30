@@ -1,0 +1,81 @@
+name: split_trip
+description: "A new Flutter project."
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+
+
+environment:
+  sdk: ^3.11.0
+
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+
+  cupertino_icons: ^1.0.8
+  get: ^4.7.3
+  shared_preferences: ^2.5.5
+  in_app_update: ^4.2.5
+  sqflite: ^2.4.3
+   # Google Sign-In and Google APIs dependencies(backup data to google drive)
+  google_sign_in: ^7.2.0
+  googleapis: ^16.0.0
+  googleapis_auth: ^2.3.2
+  extension_google_sign_in_as_googleapis_auth: ^3.0.0
+  archive: ^4.0.9 # for zip file creation and manipulation
+  intl: ^0.20.3 # for date and number formatting
+  path: ^1.9.1 # for path manipulation
+  calendar_date_picker2: ^3.0.0
+  path_provider: ^2.1.6
+  printing: ^5.15.0
+  pdf: ^3.13.0
+  flutter_local_notifications: ^22.0.1
+  open_filex: ^4.7.0
+  image_picker: ^1.2.3
+  permission_handler: ^12.0.3
+  device_info_plus: ^13.2.0
+  share_plus: ^13.2.0
+  url_launcher: ^6.3.2
+  # Firebase dependencies
+  firebase_core: ^4.12.1
+  firebase_auth: ^6.5.6
+  firebase_analytics: ^12.4.5
+  flutter_svg: ^2.3.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter packages.
+flutter:
+
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/svg/
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins/Poppins-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Poppins/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins/Poppins-Bold.ttf
+          weight: 700
+
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter/Inter-Regular.ttf
+          weight: 400 
+        - asset: assets/fonts/Inter/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter/Inter-SemiBold.ttf
+          weight: 600
