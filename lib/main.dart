@@ -1,19 +1,13 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:split_trip/core/Binding/app_initial_binding.dart';
 import 'package:split_trip/core/const/app_string.dart';
 import 'package:split_trip/core/router/app_routes.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
 import 'package:split_trip/core/theme/app_theme.dart';
-import 'package:split_trip/data/service/notification_service.dart';
-import 'package:split_trip/data/service/shared_preferences_service.dart';
-import 'package:split_trip/firebase_options.dart';
-import 'package:split_trip/services/app_initializer_service.dart';
-import 'package:split_trip/services/auth/google_auth_service.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:get/get.dart';
-
 import 'package:split_trip/services/analytics/analytics_service.dart';
+import 'package:split_trip/services/app_initializer_service.dart';
+
 import 'core/theme/theme_controller.dart';
 
 void main() async {

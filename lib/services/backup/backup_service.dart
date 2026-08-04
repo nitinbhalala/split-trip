@@ -29,7 +29,10 @@ class BackupService {
   BackupService._();
 
   /// Executes the backup process: profile check, email verification, database export, compression, and drive upload.
-  static Future<BackupResult> performBackup(GoogleSignInAccount account) async {
+  static Future<BackupResult> performBackup(
+    GoogleSignInAccount account, {
+    bool isAutoBackup = false,
+  }) async {
     try {
       final profileController = Get.find<ProfileController>();
 
@@ -59,8 +62,10 @@ class BackupService {
         );
       }
 
-      // Get authenticated client
-      final client = await GoogleAuthService.getAuthenticatedClient();
+      // Get authenticated client (disable interactive UI popups for auto backup)
+      final client = await GoogleAuthService.getAuthenticatedClient(
+        allowInteractive: !isAutoBackup,
+      );
       if (client == null) {
         return BackupResult(
           success: false,
@@ -137,7 +142,7 @@ class BackupService {
       final account = await GoogleAuthService.signInSilentlyAccount();
       if (account == null) return;
 
-      await performBackup(account);
+      await performBackup(account, isAutoBackup: true);
     } catch (e) {
       AppLogger.error(useDebug: true, "Silent daily auto backup skipped/failed: $e");
     }

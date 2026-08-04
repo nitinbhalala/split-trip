@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:split_trip/core/common/widgets/app_logger.dart';
 import 'package:split_trip/core/theme/theme_controller.dart';
-import 'package:split_trip/data/service/notification_service.dart';
+// import 'package:split_trip/data/service/notification_service.dart';
 import 'package:split_trip/data/service/shared_preferences_service.dart';
 import 'package:split_trip/firebase_options.dart';
 import 'package:split_trip/services/analytics/analytics_service.dart';
@@ -63,19 +63,12 @@ class AppInitializerService {
       },
     );
 
-    await _initializeStep(
-      name: "Notification",
-      action: () async {
-        await NotificationService.init();
-      },
-    );
-
-    await _initializeStep(
-      name: "Google Auth",
-      action: () async {
-        await GoogleAuthService.initialize();
-      },
-    );
+    // await _initializeStep(
+    //   name: "Notification",
+    //   action: () async {
+    //     await NotificationService.init();
+    //   },
+    // );
 
     await _initializeStep(
       name: "Shared Preferences",

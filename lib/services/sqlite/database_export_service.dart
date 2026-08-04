@@ -11,12 +11,18 @@ class DatabaseExportService {
 
     final profile = await dbHelper.getAll(table: DBConstants.profileTable);
     final categories = await dbHelper.getAll(table: DBConstants.categoriesTable);
+    final groups = await dbHelper.getAll(table: DBConstants.groupsTable);
+    final groupMembers = await dbHelper.getAll(table: DBConstants.groupMembersTable);
+    final groupMessages = await dbHelper.getAll(table: DBConstants.groupMessagesTable);
 
     return {
       "version": 1,
       "db_version": DBConstants.databaseVersion,
       "profile": profile,
       "categories": categories,
+      "groups": groups,
+      "group_members": groupMembers,
+      "group_messages": groupMessages,
     };
   }
 }

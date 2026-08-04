@@ -38,6 +38,7 @@ class AppCircleIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasLabel = label != null && label!.isNotEmpty;
 
     Widget iconWidget = Icon(icon, color: iconColor, size: iconSize);
 
@@ -60,29 +61,39 @@ class AppCircleIconButton extends StatelessWidget {
       );
     }
 
+    Widget content;
+    if (hasLabel) {
+      content = Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          iconWidget,
+          AppSize.gapH(6),
+          Text(
+            label!,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w500,
+              fontSize: AppSize.sp(11),
+              color: labalColor,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      );
+    } else {
+      content = iconWidget;
+    }
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(size),
       child: Padding(
-        padding: padding ?? AppSize.symmetric(horizontal: 12, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            iconWidget,
-
-            if (label != null && label!.isNotEmpty) ...[
-              AppSize.gapH(6),
-              Text(
-                label!,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  fontSize: AppSize.sp(11),
-                  color: labalColor,
-                ),
-              ),
-            ],
-          ],
-        ),
+        padding:
+            padding ??
+            (hasLabel
+                ? AppSize.symmetric(horizontal: 12, vertical: 4)
+                : EdgeInsets.zero),
+        child: FittedBox(fit: BoxFit.scaleDown, child: content),
       ),
     );
   }

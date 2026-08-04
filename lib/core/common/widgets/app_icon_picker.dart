@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:split_trip/core/common/icons/app_icons.dart';
 import 'package:split_trip/core/common/widgets/app_circle_icon_button.dart';

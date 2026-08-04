@@ -220,15 +220,24 @@ class GoogleAuthService {
   static bool get isSignedIn => _firebaseAuth.currentUser != null;
 
   /// Generates a Google APIs client authenticated with the user's Google Sign-In credentials.
-  static Future<auth.AuthClient?> getAuthenticatedClient() async {
+  /// Set [allowInteractive] to false during background/auto-backup operations to prevent UI popups on app launch.
+  static Future<auth.AuthClient?> getAuthenticatedClient({
+    bool allowInteractive = true,
+  }) async {
+    if (!_isInitialized) await initialize();
     if (_currentUser == null) return null;
 
     final authorization = await _currentUser!.authorizationClient
         .authorizationForScopes(_scopes);
-    final finalAuthorization =
-        authorization ??
-        await _currentUser!.authorizationClient.authorizeScopes(_scopes);
 
-    return finalAuthorization.authClient(scopes: _scopes);
+    if (authorization == null) {
+      if (!allowInteractive) return null;
+
+      final finalAuthorization =
+          await _currentUser!.authorizationClient.authorizeScopes(_scopes);
+      return finalAuthorization.authClient(scopes: _scopes);
+    }
+
+    return authorization.authClient(scopes: _scopes);
   }
 }

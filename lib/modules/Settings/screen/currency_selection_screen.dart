@@ -165,7 +165,7 @@ class CurrencySelectionScreen extends StatelessWidget {
                       color: isSelected
                           ? AppColors.primary
                           : (isDark
-                                ? AppColors.primary.withValues(alpha: 0.15)
+                                ? AppColors.primary
                                 : AppColors.primaryDark),
                       shape: BoxShape.circle,
                     ),
@@ -180,8 +180,8 @@ class CurrencySelectionScreen extends StatelessWidget {
                             fontFamily: "Iner",
                             fontWeight: FontWeight.w600,
                             color: isSelected
-                                ? Colors.white
-                                : AppColors.primary,
+                                ? AppColors.warningLight
+                                : AppColors.white,
                           ),
                         );
                       },
@@ -199,7 +199,6 @@ class CurrencySelectionScreen extends StatelessWidget {
                       AppTextSpan(
                         text: " (${currency.symbol})",
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppColors.subtitle,
                           fontWeight: FontWeight.w600,
                           fontSize: AppSize.sp(12),
                         ),
@@ -209,7 +208,7 @@ class CurrencySelectionScreen extends StatelessWidget {
                   subtitle: Text(
                     name,
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: AppColors.subtitle,
+                      color: theme.textTheme.bodySmall?.color,
                       fontSize: AppSize.sp(10),
                     ),
                   ),

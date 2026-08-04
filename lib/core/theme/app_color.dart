@@ -27,7 +27,7 @@ class AppColors {
   static const Color income = Color(0xFF22C55E);
   static const Color expense = Color(0xFFEF4444);
   static const Color savings = Color(0xFF6366F1);
-  static const Color budget = Color(0xFF10B981);
+  // static const Color darkincomeCard = Color(0xFFE8F7F0);
 
   // =========================
   // Text Colors

@@ -13,8 +13,6 @@ class MainController extends GetxController {
   void onReady() {
     super.onReady();
     checkForUpdate();
-    // Daily auto-backup check on app startup (only backs up if new changes exist)
-    BackupService.performAutoBackup();
   }
 
   Future<void> checkForUpdate() async {

@@ -201,14 +201,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       Positioned(
-                        bottom: 0,
-                        right: 0,
+                        top: 2,
+                        right: 4,
                         child: AppCircleIconButton(
+                          padding: EdgeInsets.zero,
                           icon: Icons.edit_rounded,
                           iconColor: Colors.white,
                           showBackground: true,
                           backgroundColor: AppColors.primary,
-                          size: AppSize.w(32),
+                          size: AppSize.w(24),
                           iconSize: AppSize.sp(14),
                           onTap: _showImagePickerOptions,
                         ),
@@ -235,13 +236,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       AppValidationHelper.name(value, "Last Name"),
                 ),
                 AppSize.gapH(16),
-                CustomTextField(
-                  title: "Email Address",
-                  controller: _emailController,
-                  hint: "Enter your email address",
-                  readOnly: true,
-                  keyBoardType: TextInputType.emailAddress,
-                  validator: (value) => AppValidationHelper.email(value),
+                Obx(
+                  () => CustomTextField(
+                    title: "Email Address",
+                    controller: _emailController,
+                    hint: "Enter your email address",
+                    readOnly: !_controller.isEmailEditable,
+                    keyBoardType: TextInputType.emailAddress,
+                    validator: (value) => AppValidationHelper.email(value),
+                  ),
                 ),
                 AppSize.gapH(40),
 

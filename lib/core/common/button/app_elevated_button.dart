@@ -12,7 +12,7 @@ class AppElevatedButton extends StatelessWidget {
   final double elevation;
   final bool isLoading;
   final bool isEnabled;
-  final BorderRadius? borderRadius;
+  final double? borderRadius;
   final Gradient? gradient;
   final Color? color;
   final IconData? icon;
@@ -51,24 +51,25 @@ class AppElevatedButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = borderRadius ?? BorderRadius.circular(10);
+    final radius = borderRadius ?? 10;
 
     return SizedBox(
       height: height ?? AppSize.h(50),
       width: width,
       child: Material(
         elevation: elevation,
-        borderRadius: radius,
+        borderRadius: BorderRadius.circular(radius),
 
         child: InkWell(
-          borderRadius: radius,
+          borderRadius: BorderRadius.circular(radius),
           onTap: (!isEnabled || isLoading) ? null : onPressed,
           child: Ink(
             decoration: BoxDecoration(
-              borderRadius: radius,
+              borderRadius: BorderRadius.circular(radius),
               color: isEnabled
                   ? (color ?? AppColors.primaryDark)
-                  : (isEnbleColor ?? const Color.fromARGB(255, 88, 143, 197)),
+                  : (isEnbleColor ??
+                        Theme.of(context).colorScheme.outlineVariant),
             ),
             child: Padding(
               padding: padding ?? EdgeInsets.symmetric(horizontal: 0),

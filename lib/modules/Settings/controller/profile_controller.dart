@@ -1,4 +1,3 @@
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -16,6 +15,23 @@ class ProfileController extends GetxController {
   final RxString profilePicture = "".obs; // Holds picked image file path
 
   final RxBool isLoading = false.obs;
+
+  /// Returns true if current logged-in Firebase user signed in with Apple.
+  bool get isAppleLogin {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      return user.providerData.any((p) => p.providerId == 'apple.com');
+    }
+    return false;
+  }
+
+  /// Returns true if email should be editable in profile screen (e.g. Apple sign-in or empty email).
+  bool get isEmailEditable {
+    final currentEmail = email
+        .value; // Always touch Rx variable for GetX Obx listener registration
+    if (isAppleLogin) return true;
+    return currentEmail.trim().isEmpty;
+  }
 
   @override
   void onInit() {
@@ -42,7 +58,9 @@ class ProfileController extends GetxController {
 
         // Auto-sync Firebase user details if database email is empty
         final firebaseUser = FirebaseAuth.instance.currentUser;
-        if (email.value.isEmpty && firebaseUser != null && firebaseUser.email != null) {
+        if (email.value.isEmpty &&
+            firebaseUser != null &&
+            firebaseUser.email != null) {
           email.value = firebaseUser.email!;
           final displayName = firebaseUser.displayName ?? "";
           if (firstName.value.isEmpty) {
@@ -50,7 +68,12 @@ class ProfileController extends GetxController {
             if (displayName.isNotEmpty) {
               fName = displayName.split(" ").first;
             } else {
-              fName = firebaseUser.email!.split('@').first.replaceAll(RegExp(r'[_.-]'), ' ').split(RegExp(r'\s+')).first;
+              fName = firebaseUser.email!
+                  .split('@')
+                  .first
+                  .replaceAll(RegExp(r'[_.-]'), ' ')
+                  .split(RegExp(r'\s+'))
+                  .first;
             }
             if (fName.isNotEmpty) {
               firstName.value = fName[0].toUpperCase() + fName.substring(1);
@@ -64,13 +87,24 @@ class ProfileController extends GetxController {
                 lName = parts.sublist(1).join(" ");
               }
             } else {
-              final parts = firebaseUser.email!.split('@').first.replaceAll(RegExp(r'[_.-]'), ' ').split(RegExp(r'\s+'));
+              final parts = firebaseUser.email!
+                  .split('@')
+                  .first
+                  .replaceAll(RegExp(r'[_.-]'), ' ')
+                  .split(RegExp(r'\s+'));
               if (parts.length > 1) {
                 lName = parts.sublist(1).join(" ");
               }
             }
             if (lName.isNotEmpty) {
-              lastName.value = lName.split(' ').map((str) => str.isNotEmpty ? str[0].toUpperCase() + str.substring(1) : '').join(' ');
+              lastName.value = lName
+                  .split(' ')
+                  .map(
+                    (str) => str.isNotEmpty
+                        ? str[0].toUpperCase() + str.substring(1)
+                        : '',
+                  )
+                  .join(' ');
             }
           }
 
@@ -102,7 +136,8 @@ class ProfileController extends GetxController {
       } else {
         // Create initial default empty profile in DB
         final currencyController = Get.find<CurrencyController>();
-        final currentCurrencyCode = currencyController.selectedCurrency.value.code;
+        final currentCurrencyCode =
+            currencyController.selectedCurrency.value.code;
 
         // Auto-sync Firebase user details if we are signing in for the first time
         final firebaseUser = FirebaseAuth.instance.currentUser;
@@ -119,17 +154,29 @@ class ProfileController extends GetxController {
               initialLName = displayName.split(" ").sublist(1).join(" ");
             }
           } else {
-            final parts = firebaseUser.email!.split('@').first.replaceAll(RegExp(r'[_.-]'), ' ').split(RegExp(r'\s+'));
+            final parts = firebaseUser.email!
+                .split('@')
+                .first
+                .replaceAll(RegExp(r'[_.-]'), ' ')
+                .split(RegExp(r'\s+'));
             initialFName = parts.first;
             if (parts.length > 1) {
               initialLName = parts.sublist(1).join(" ");
             }
           }
           if (initialFName.isNotEmpty) {
-            initialFName = initialFName[0].toUpperCase() + initialFName.substring(1);
+            initialFName =
+                initialFName[0].toUpperCase() + initialFName.substring(1);
           }
           if (initialLName.isNotEmpty) {
-            initialLName = initialLName.split(' ').map((str) => str.isNotEmpty ? str[0].toUpperCase() + str.substring(1) : '').join(' ');
+            initialLName = initialLName
+                .split(' ')
+                .map(
+                  (str) => str.isNotEmpty
+                      ? str[0].toUpperCase() + str.substring(1)
+                      : '',
+                )
+                .join(' ');
           }
         }
 
@@ -165,7 +212,8 @@ class ProfileController extends GetxController {
     try {
       final db = DatabaseHelper.instance;
       final currencyController = Get.find<CurrencyController>();
-      final currentCurrencyCode = currencyController.selectedCurrency.value.code;
+      final currentCurrencyCode =
+          currencyController.selectedCurrency.value.code;
 
       // Ensure email is never accidentally cleared if a valid email is available from Firebase/State
       String finalEmail = emailVal.trim();

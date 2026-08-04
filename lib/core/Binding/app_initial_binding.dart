@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:split_trip/core/theme/theme_controller.dart';
 import 'package:split_trip/mainScreen/main_controller.dart';
 import 'package:split_trip/modules/Category/controller/category_controller.dart';
+import 'package:split_trip/modules/Group/controller/group_controller.dart';
 import 'package:split_trip/modules/Settings/controller/backup_controller.dart';
 import 'package:split_trip/modules/Settings/controller/currency_controller.dart';
 import 'package:split_trip/modules/Settings/controller/profile_controller.dart';
@@ -25,5 +26,6 @@ class MainBinding extends Bindings {
     Get.lazyPut(() => CategoryController(), fenix: true);
     Get.lazyPut(() => ProfileController(), fenix: true);
     Get.lazyPut(() => BackupController(), fenix: true);
+    Get.lazyPut(() => GroupController(), fenix: true);
   }
 }

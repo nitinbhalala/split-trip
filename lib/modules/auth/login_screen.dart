@@ -1,12 +1,12 @@
 import 'package:flutter_svg/svg.dart';
-import 'package:split_trip/core/common/loader/app_loader.dart';
 import 'package:split_trip/core/common/widgets/common_social_button.dart';
 import 'package:split_trip/core/const/app_assets.dart';
 import 'package:split_trip/core/router/app_pages.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
 import 'package:split_trip/core/theme/app_color.dart';
-import 'package:split_trip/data/service/notification_service.dart';
+// import 'package:split_trip/data/service/notification_service.dart';
 import 'package:split_trip/services/analytics/analytics_service.dart';
+import 'package:split_trip/services/auth/apple_auth_service.dart';
 import 'package:split_trip/services/auth/google_auth_service.dart';
 import 'package:split_trip/modules/Settings/controller/profile_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -24,7 +24,8 @@ class _LoginScreenState extends State<LoginScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  bool _isLoading = false;
+  bool _isGoogleLoading = false;
+  bool _isAppleLoading = false;
 
   Future<void> _saveProfileDetails() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -60,8 +61,8 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> _handleGoogleSignIn() async {
-    if (_isLoading) return;
-    setState(() => _isLoading = true);
+    if (_isGoogleLoading || _isAppleLoading) return;
+    setState(() => _isGoogleLoading = true);
     try {
       final credential = await GoogleAuthService.signIn();
 
@@ -99,7 +100,38 @@ class _LoginScreenState extends State<LoginScreen>
         duration: const Duration(seconds: 5),
       );
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
+  }
+
+  Future<void> _handleAppleSignIn() async {
+    if (_isGoogleLoading || _isAppleLoading) return;
+    setState(() => _isAppleLoading = true);
+    try {
+      final credential = await AppleAuthService.signIn();
+
+      if (!mounted) return;
+
+      if (credential != null || AppleAuthService.isSignedIn) {
+        await _saveProfileDetails();
+        AnalyticsService.logLogin();
+        Get.offAllNamed(AppRoutes.main);
+        return;
+      }
+    } catch (e) {
+      if (!mounted) return;
+      Get.snackbar(
+        'Sign-in Failed',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.error.withValues(alpha: 0.9),
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+        duration: const Duration(seconds: 5),
+      );
+    } finally {
+      if (mounted) setState(() => _isAppleLoading = false);
     }
   }
 
@@ -122,9 +154,9 @@ class _LoginScreenState extends State<LoginScreen>
         );
     _animationController.forward();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      NotificationService.requestPermission();
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   NotificationService.requestPermission();
+    // });
   }
 
   @override
@@ -168,19 +200,22 @@ class _LoginScreenState extends State<LoginScreen>
                   CommonSocialButton(
                     text: "Continue with Google",
                     imagePath: AppAssets.googleIcon,
-                    isLoading: _isLoading,
-                    onTap: _handleGoogleSignIn,
+                    isLoading: _isGoogleLoading,
+                    onTap: (_isGoogleLoading || _isAppleLoading)
+                        ? () {}
+                        : _handleGoogleSignIn,
                   ),
 
                   AppSize.gapH(10),
 
+                  // ── Apple Login Button ─────────────────────────────────────
                   CommonSocialButton(
                     text: "Continue with Apple",
                     imagePath: AppAssets.appleIcon,
-                    isLoading: _isLoading,
-                    onTap: (){
-                      //app signin logic
-                    },
+                    isLoading: _isAppleLoading,
+                    onTap: (_isGoogleLoading || _isAppleLoading)
+                        ? () {}
+                        : _handleAppleSignIn,
                   ),
                   AppSize.gapH(20),
                 ],

@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
 
@@ -66,12 +67,11 @@ class AppCard extends StatelessWidget {
             ? Border.all(color: finalBorderColor, width: borderWidth ?? 1)
             : null,
       ),
-      padding: finalPadding,
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(finalRadius),
         clipBehavior: Clip.antiAlias,
-        child: child,
+        child: Padding(padding: finalPadding, child: child),
       ),
     );
 

@@ -45,8 +45,10 @@ class AppAutoSizeText extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final double? targetWidth =
+            constraints.maxWidth.isFinite ? constraints.maxWidth : null;
         return SizedBox(
-          width: constraints.maxWidth,
+          width: targetWidth,
           child: FittedBox(
             fit: BoxFit.scaleDown,
             alignment: resolvedAlignment,

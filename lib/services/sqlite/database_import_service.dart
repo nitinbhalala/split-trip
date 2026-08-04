@@ -15,6 +15,9 @@ class DatabaseImportService {
       // 1. Clear existing tables
       await txn.delete(DBConstants.profileTable);
       await txn.delete(DBConstants.categoriesTable);
+      await txn.delete(DBConstants.groupsTable);
+      await txn.delete(DBConstants.groupMembersTable);
+      await txn.delete(DBConstants.groupMessagesTable);
 
       // 2. Restore Profile Table
       final List<dynamic> profileList = data['profile'] ?? [];
@@ -36,7 +39,35 @@ class DatabaseImportService {
         );
       }
 
-     
+      // 4. Restore Groups Table
+      final List<dynamic> groupsList = data['groups'] ?? [];
+      for (final groupData in groupsList) {
+        await txn.insert(
+          DBConstants.groupsTable,
+          Map<String, dynamic>.from(groupData as Map),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+
+      // 5. Restore Group Members Table
+      final List<dynamic> membersList = data['group_members'] ?? [];
+      for (final memberData in membersList) {
+        await txn.insert(
+          DBConstants.groupMembersTable,
+          Map<String, dynamic>.from(memberData as Map),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+
+      // 6. Restore Group Messages Table
+      final List<dynamic> messagesList = data['group_messages'] ?? [];
+      for (final messageData in messagesList) {
+        await txn.insert(
+          DBConstants.groupMessagesTable,
+          Map<String, dynamic>.from(messageData as Map),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
     });
   }
 }

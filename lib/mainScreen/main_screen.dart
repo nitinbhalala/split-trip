@@ -4,7 +4,10 @@ import 'package:split_trip/core/theme/app_color.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:split_trip/mainScreen/main_controller.dart';
+import 'package:split_trip/modules/Activity/screen/activity_screen.dart';
+import 'package:split_trip/modules/Group/screen/group_screen.dart';
 import 'package:split_trip/modules/Home/screen/dashbord_screen.dart';
+import 'package:split_trip/modules/Report/screen/report_screen.dart';
 import 'package:split_trip/modules/Settings/screen/settings_screen.dart';
 
 class MainScreen extends GetView<MainController> {
@@ -16,9 +19,9 @@ class MainScreen extends GetView<MainController> {
 
     final screens = [
       DashbordScreen(),
-      // TranscationsScreen(),
-      // EntryScreen(),
-      // ReportScreen(),
+      ReportScreen(),
+      GroupScreen(),
+      ActivityScreen(),
       SettingsScreen(),
     ];
 
@@ -58,23 +61,24 @@ class MainScreen extends GetView<MainController> {
                 ),
                 Expanded(
                   child: _BottomNavItem(
-                    icon: Icons.receipt_long_rounded,
-                    label: "Transactions",
-                    index: 1,
+                    icon: Icons.pie_chart_rounded,
+                    label: "Report",
+                    index: 3,
                   ),
                 ),
+
                 Expanded(
                   child: _BottomNavItem(
-                    icon: Icons.add_box,
-                    label: "Add Entry",
+                    icon: Icons.group,
+                    label: "Group",
                     index: 2,
                   ),
                 ),
                 Expanded(
                   child: _BottomNavItem(
-                    icon: Icons.pie_chart_rounded,
-                    label: "Report",
-                    index: 3,
+                    icon: Icons.watch_later,
+                    label: "Activity",
+                    index: 1,
                   ),
                 ),
                 Expanded(
@@ -106,7 +110,7 @@ class _BottomNavItem extends GetView<MainController> {
 
   @override
   Widget build(BuildContext context) {
-    final isAddEntry = index == 2;
+    final groupscreen = index == 2;
     return Obx(() {
       final selected = controller.currentIndex.value == index;
 
@@ -121,13 +125,13 @@ class _BottomNavItem extends GetView<MainController> {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (isAddEntry) ...[
+            if (groupscreen) ...[
               Container(
                 width: AppSize.w(32),
                 height: AppSize.w(32),
                 margin: AppSize.only(bottom: 2),
                 decoration: BoxDecoration(
-                  color: selected ? AppColors.primary : AppColors.savings,
+                  color: selected ? AppColors.primaryDark : AppColors.primary,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
@@ -152,7 +156,9 @@ class _BottomNavItem extends GetView<MainController> {
                 child: Icon(
                   icon,
                   size: selected ? 23 : 22,
-                  color: selected ? AppColors.primary : const Color(0xFF9CA3AF),
+                  color: selected
+                      ? AppColors.primaryDark
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -161,7 +167,9 @@ class _BottomNavItem extends GetView<MainController> {
               style: TextStyle(
                 fontSize: 10.5,
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                color: selected ? AppColors.primary : const Color(0xFF9CA3AF),
+                color: selected
+                    ? AppColors.primaryDark
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
               child: Text(label),
             ),

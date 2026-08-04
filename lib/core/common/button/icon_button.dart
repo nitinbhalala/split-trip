@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get_utils/src/extensions/context_extensions.dart';
 import 'package:split_trip/core/common/loader/app_loader.dart';
@@ -13,7 +12,7 @@ class AppIconButton extends StatelessWidget {
   final double elevation;
   final bool isLoading;
   final bool isEnabled;
-  final BorderRadius? borderRadius;
+  final double? borderRadius;
   final Gradient? gradient;
   final Color? color;
   final double iconSize;
@@ -41,27 +40,28 @@ class AppIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = borderRadius ?? BorderRadius.circular(12);
+    final radius = borderRadius ?? 12;
 
     return SizedBox(
       height: height ?? AppSize.h(45),
       width: width ?? AppSize.w(45),
       child: Material(
         elevation: elevation,
-        borderRadius: radius,
+        borderRadius: BorderRadius.circular(radius),
         child: InkWell(
-          borderRadius: radius,
+          borderRadius: BorderRadius.circular(radius),
           onTap: (!isEnabled || isLoading) ? null : onPressed,
           child: Ink(
             decoration: BoxDecoration(
-              borderRadius: radius,
+              borderRadius: BorderRadius.circular(radius),
               gradient: gradient,
               color: gradient == null
                   ? (isEnabled
-                      ? (color ?? AppColors.primaryDark)
-                      : (disabledColor ??
-                          context.theme.colorScheme.outline
-                              .withValues(alpha: 0.4)))
+                        ? (color ?? AppColors.primaryDark)
+                        : (disabledColor ??
+                              context.theme.colorScheme.outline.withValues(
+                                alpha: 0.4,
+                              )))
                   : null,
             ),
             child: Padding(
@@ -78,7 +78,7 @@ class AppIconButton extends StatelessWidget {
                         color: isEnabled
                             ? iconColor
                             : context.theme.colorScheme.onSurfaceVariant
-                                .withValues(alpha: 0.5),
+                                  .withValues(alpha: 0.5),
                       ),
               ),
             ),

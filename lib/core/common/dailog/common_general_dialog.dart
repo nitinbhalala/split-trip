@@ -105,7 +105,7 @@ Future<bool?> showAppConfirmationDialog({
                   AppSize.gapW(12),
                   Expanded(
                     child: AppElevatedButton(
-                      borderRadius: BorderRadius.circular(AppSize.r(9)),
+                      borderRadius:AppSize.r(9),
                       title: confirmText,
                       onPressed: () => Get.back(result: true),
                       color: isDeleteAction

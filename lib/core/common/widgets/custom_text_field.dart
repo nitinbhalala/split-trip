@@ -44,6 +44,8 @@ class CustomTextField extends StatefulWidget {
   final TextStyle? hintTextStyle;
   final TextAlign? textAlign;
   final bool isMoney;
+  final double? dollarFontSize;
+  final TextStyle? dollarStyle;
   const CustomTextField({
     required this.title,
     super.key,
@@ -82,6 +84,8 @@ class CustomTextField extends StatefulWidget {
     this.hintTextStyle,
     this.fill = false,
     this.isMoney = false,
+    this.dollarFontSize,
+    this.dollarStyle,
   });
 
   @override
@@ -107,11 +111,11 @@ class _CustomTextFieldState extends State<CustomTextField> {
     super.dispose();
   }
 
-  double _getLeftPadding(String symbol) {
-    if (symbol.length <= 1) return 22.0;
-    if (symbol.length == 2) return 32.0;
-    if (symbol.length == 3) return 42.0;
-    return 56.0;
+  double _getLeftPadding(String symbol, double symbolFontSize) {
+    if (symbol.length <= 1) return symbolFontSize + 4.0;
+    if (symbol.length == 2) return (symbolFontSize * 1.5) + 4.0;
+    if (symbol.length == 3) return (symbolFontSize * 2.2) + 4.0;
+    return (symbolFontSize * 2.8) + 4.0;
   }
 
   @override
@@ -133,8 +137,14 @@ class _CustomTextFieldState extends State<CustomTextField> {
               ? Get.find<CurrencyController>().selectedCurrency.value.symbol
               : '\$';
 
+          final double symbolFontSize =
+              widget.dollarFontSize ??
+              (widget.dollarStyle?.fontSize ??
+                  (widget.textStyle?.fontSize ??
+                      (widget.isDense ? AppSize.sp(14) : AppSize.sp(16))));
+
           final double leftPadding = widget.isDOllar == true
-              ? _getLeftPadding(symbol)
+              ? _getLeftPadding(symbol, symbolFontSize)
               : 8.0;
 
           return Stack(
@@ -206,66 +216,82 @@ class _CustomTextFieldState extends State<CustomTextField> {
                       Theme.of(context).textTheme.titleSmall!.copyWith(
                         color: AppColors.lightHint,
                       ),
-                  border: widget.removeBorder ? InputBorder.none : null,
+                  border: widget.removeBorder
+                      ? InputBorder.none
+                      : widget.allBorder,
                   enabledBorder: widget.removeBorder
                       ? InputBorder.none
-                      : OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            widget.borderRadius,
-                          ),
-                          borderSide: BorderSide(
-                            color: widget.readOnly
-                                ? (widget.disbleBorderColor ??
-                                      Theme.of(context)
-                                          .inputDecorationTheme
-                                          .disabledBorder
-                                          ?.borderSide
-                                          .color ??
-                                      Theme.of(context).disabledColor)
-                                : (widget.disbleBorderColor ??
-                                      Theme.of(context)
-                                          .inputDecorationTheme
-                                          .enabledBorder
-                                          ?.borderSide
-                                          .color ??
-                                      Theme.of(context).dividerColor),
-                          ),
-                        ),
+                      : (widget.allBorder ??
+                            OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                widget.borderRadius,
+                              ),
+                              borderSide: BorderSide(
+                                color: widget.readOnly
+                                    ? (widget.disbleBorderColor ??
+                                          Theme.of(context)
+                                              .inputDecorationTheme
+                                              .disabledBorder
+                                              ?.borderSide
+                                              .color ??
+                                          Theme.of(context).disabledColor)
+                                    : (widget.disbleBorderColor ??
+                                          Theme.of(context)
+                                              .inputDecorationTheme
+                                              .enabledBorder
+                                              ?.borderSide
+                                              .color ??
+                                          Theme.of(context).dividerColor),
+                              ),
+                            )),
                   focusedBorder: widget.removeBorder
                       ? InputBorder.none
-                      : OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            widget.borderRadius,
-                          ),
-                          borderSide: BorderSide(
-                            color: widget.readOnly
-                                ? (widget.disbleBorderColor ??
-                                      Theme.of(context)
-                                          .inputDecorationTheme
-                                          .disabledBorder
-                                          ?.borderSide
-                                          .color ??
-                                      Theme.of(context).disabledColor)
-                                : (widget.focusBorderColor ??
-                                      Theme.of(context)
-                                          .inputDecorationTheme
-                                          .focusedBorder
-                                          ?.borderSide
-                                          .color ??
-                                      Theme.of(context).primaryColor),
-                          ),
-                        ),
+                      : (widget.allBorder != null
+                            ? (widget.allBorder is UnderlineInputBorder
+                                  ? UnderlineInputBorder(
+                                      borderSide: BorderSide(
+                                        color:
+                                            widget.focusBorderColor ??
+                                            Theme.of(context).primaryColor,
+                                        width: 2,
+                                      ),
+                                    )
+                                  : widget.allBorder)
+                            : OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(
+                                  widget.borderRadius,
+                                ),
+                                borderSide: BorderSide(
+                                  color: widget.readOnly
+                                      ? (widget.disbleBorderColor ??
+                                            Theme.of(context)
+                                                .inputDecorationTheme
+                                                .disabledBorder
+                                                ?.borderSide
+                                                .color ??
+                                            Theme.of(context).disabledColor)
+                                      : (widget.focusBorderColor ??
+                                            Theme.of(context)
+                                                .inputDecorationTheme
+                                                .focusedBorder
+                                                ?.borderSide
+                                                .color ??
+                                            Theme.of(context).primaryColor),
+                                ),
+                              )),
                 ),
               ),
               widget.isDOllar == false
-                  ? SizedBox(height: 0, width: 0)
+                  ? const SizedBox(height: 0, width: 0)
                   : Padding(
                       padding: AppSize.only(left: 0.0),
                       child: Text(
                         symbol,
-                        style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                          fontSize: AppSize.sp(19),
-                        ),
+                        style:
+                            widget.dollarStyle ??
+                            Theme.of(context).textTheme.bodySmall!.copyWith(
+                              fontSize: symbolFontSize,
+                            ),
                       ),
                     ),
             ],
