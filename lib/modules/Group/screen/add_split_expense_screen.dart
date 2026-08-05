@@ -79,15 +79,18 @@ class _AddSplitExpenseScreenState extends State<AddSplitExpenseScreen> {
           },
         ),
       ),
-      body: Obx(() {
-        if (splitController.step.value == 1) {
-          return _buildAmountInputStep(theme);
-        } else if (splitController.step.value == 2) {
-          return _buildPayerSelectionStep(theme);
-        } else {
-          return _buildSplitAllocationStep(theme, isKeyboardOpen);
-        }
-      }),
+      body: SafeArea(
+        bottom: true,
+        child: Obx(() {
+          if (splitController.step.value == 1) {
+            return _buildAmountInputStep(theme);
+          } else if (splitController.step.value == 2) {
+            return _buildPayerSelectionStep(theme);
+          } else {
+            return _buildSplitAllocationStep(theme, isKeyboardOpen);
+          }
+        }),
+      ),
     );
   }
 
@@ -370,7 +373,7 @@ class _AddSplitExpenseScreenState extends State<AddSplitExpenseScreen> {
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: .end,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Icon(
                     Icons.account_balance_wallet_outlined,

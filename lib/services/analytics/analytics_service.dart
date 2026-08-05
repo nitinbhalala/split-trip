@@ -50,10 +50,7 @@ class AnalyticsService {
   static Future<void> logBackup({required bool success, String? error}) async {
     await logEvent(
       name: "backup_to_drive",
-      parameters: {
-        "success": success ? 1 : 0,
-        if (error != null) "error": error,
-      },
+      parameters: {"success": success ? 1 : 0, "error": ?error},
     );
   }
 
@@ -61,10 +58,7 @@ class AnalyticsService {
   static Future<void> logRestore({required bool success, String? error}) async {
     await logEvent(
       name: "restore_from_drive",
-      parameters: {
-        "success": success ? 1 : 0,
-        if (error != null) "error": error,
-      },
+      parameters: {"success": success ? 1 : 0, "error": ?error},
     );
   }
 }

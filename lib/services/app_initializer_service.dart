@@ -4,11 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:split_trip/core/common/widgets/app_logger.dart';
 import 'package:split_trip/core/theme/theme_controller.dart';
+import 'package:split_trip/modules/Settings/controller/currency_controller.dart';
 // import 'package:split_trip/data/service/notification_service.dart';
 import 'package:split_trip/data/service/shared_preferences_service.dart';
 import 'package:split_trip/firebase_options.dart';
 import 'package:split_trip/services/analytics/analytics_service.dart';
-import 'package:split_trip/services/auth/google_auth_service.dart';
 
 class AppInitializerService {
   AppInitializerService._();
@@ -81,6 +81,13 @@ class AppInitializerService {
       name: "Theme Controller",
       action: () async {
         Get.put(ThemeController(), permanent: true);
+      },
+    );
+
+    await _initializeStep(
+      name: "Currency Controller",
+      action: () async {
+        Get.put(CurrencyController(), permanent: true);
       },
     );
 

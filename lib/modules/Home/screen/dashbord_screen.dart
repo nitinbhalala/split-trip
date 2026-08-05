@@ -205,18 +205,17 @@ class DashbordScreen extends StatelessWidget {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: trips.length,
-                separatorBuilder: (_, __) => AppSize.gapH(8),
+                separatorBuilder: (_, _) => AppSize.gapH(8),
                 itemBuilder: (_, index) {
                   final trip = trips[index];
-
                   return TripCard(
                     title: trip.title,
                     members: trip.members,
                     amount: trip.amount,
-                    statusText: trip.statusText,
+                    // statusText: trip.statusText,
                     icon: trip.icon,
                     gradient: trip.gradient,
-                    isOwe: trip.isOwe,
+                    // isOwe: trip.isOwe,
                   );
                 },
               ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:split_trip/core/common/loader/app_loader.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
 import 'package:split_trip/core/theme/app_color.dart';
 
@@ -67,7 +66,7 @@ class CommonSocialButton extends StatelessWidget {
                       imagePath!,
                       height: AppSize.sp(20),
                       width: AppSize.sp(20),
-                      errorBuilder: (_, __, ___) => Icon(
+                      errorBuilder: (_, _, _) => Icon(
                         Icons.account_circle_outlined,
                         color: AppColors.primary,
                         size: AppSize.sp(20),

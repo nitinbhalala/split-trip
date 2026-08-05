@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:split_trip/data/database/database_helper.dart';
 import 'package:split_trip/data/database/db_constants.dart';
+import 'package:split_trip/data/model/expense_metadata_model.dart';
 import 'package:split_trip/data/model/group_member_model.dart';
+import 'package:split_trip/data/model/group_message_model.dart';
 import 'package:split_trip/data/model/group_model.dart';
 import 'package:split_trip/modules/Settings/controller/profile_controller.dart';
 import 'package:split_trip/services/backup/backup_service.dart';
 
 class GroupController extends GetxController {
   final RxList<GroupModel> groups = <GroupModel>[].obs;
+  final RxMap<int, double> groupPendingExpenses = <int, double>{}.obs;
   final RxBool isLoading = false.obs;
 
   @override
@@ -17,7 +20,7 @@ class GroupController extends GetxController {
     loadGroups();
   }
 
-  /// Loads all groups from SQLite database.
+  /// Loads all groups & calculates pending (unsettled) expenses from SQLite database.
   Future<void> loadGroups() async {
     isLoading.value = true;
     try {
@@ -27,7 +30,49 @@ class GroupController extends GetxController {
         orderBy: "${DBConstants.id} DESC",
       );
 
-      groups.value = result.map((e) => GroupModel.fromMap(e)).toList();
+      final loadedGroups = result.map((e) => GroupModel.fromMap(e)).toList();
+      groups.value = loadedGroups;
+
+      // Calculate total pending (unsettled) expenses for each group
+      final Map<int, double> tempPending = {};
+      for (var g in loadedGroups) {
+        if (g.id != null) {
+          final membersData = await db.getWhere(
+            table: DBConstants.groupMembersTable,
+            where: "${DBConstants.memberGroupId} = ?",
+            args: [g.id],
+            orderBy: "${DBConstants.id} ASC",
+          );
+          final members =
+              membersData.map((e) => GroupMemberModel.fromMap(e)).toList();
+
+          final messagesData = await db.getWhere(
+            table: DBConstants.groupMessagesTable,
+            where: "${DBConstants.msgGroupId} = ?",
+            args: [g.id],
+            orderBy: "${DBConstants.id} ASC",
+          );
+
+          double totalPending = 0.0;
+          for (var mData in messagesData) {
+            final msg = GroupMessageModel.fromMap(mData);
+            if (msg.isExpense) {
+              final meta = ExpenseMetadataModel.parse(msg, members);
+              if (!meta.isClosed) {
+                meta.splits.forEach((memberName, share) {
+                  final bool isPaid = (memberName == meta.paidByName) ||
+                      meta.paidMemberNames.contains(memberName);
+                  if (!isPaid) {
+                    totalPending += share;
+                  }
+                });
+              }
+            }
+          }
+          tempPending[g.id!] = totalPending;
+        }
+      }
+      groupPendingExpenses.value = tempPending;
     } catch (e) {
       debugPrint("Error loading groups: $e");
     } finally {

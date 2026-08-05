@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:split_trip/core/common/widgets/app_alert_dialog.dart';
 
 enum _PickerAction { camera, gallery, remove }
 
@@ -169,22 +170,19 @@ class ImagePickerService {
   // ── Settings redirect dialog ───────────────────────────────────────────────
 
   static Future<void> _showSettingsDialog({required String title, required String message}) async {
-    await Get.dialog<void>(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              Get.back();
-              await openAppSettings();
-            },
-            child: const Text('Open Settings'),
-          ),
-        ],
-      ),
+    await AppAlertDialog.show<void>(
+      titleText: title,
+      contentText: message,
+      actions: [
+        TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+        ElevatedButton(
+          onPressed: () async {
+            Get.back();
+            await openAppSettings();
+          },
+          child: const Text('Open Settings'),
+        ),
+      ],
       barrierDismissible: false,
     );
   }

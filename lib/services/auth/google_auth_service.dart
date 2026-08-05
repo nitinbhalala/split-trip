@@ -29,8 +29,7 @@ class GoogleAuthService {
   static Future<void> initialize({
     String? clientId,
     // Web Client ID from google-services.json (oauth_client with client_type: 3)
-    String? serverClientId =
-       AppString.serverClientId,
+    String? serverClientId = AppString.serverClientId,
   }) async {
     if (_isInitialized) return;
 
@@ -101,7 +100,7 @@ class GoogleAuthService {
         }
         return _currentUser;
       }
-    } catch (_) {  
+    } catch (_) {
       // Fall through to interactive prompt if silent auth is unavailable
     }
 
@@ -149,7 +148,7 @@ class GoogleAuthService {
   static Future<UserCredential> _signInToFirebase(
     GoogleSignInAccount googleUser,
   ) async {
-    final googleAuth = await googleUser.authentication;
+    final googleAuth = googleUser.authentication;
 
     // idToken should always be present — if null, likely SHA-1 fingerprint
     // is missing in Firebase Console or a network/config issue.
@@ -183,13 +182,12 @@ class GoogleAuthService {
       } on FirebaseAuthException catch (e) {
         if (e.code == 'requires-recent-login') {
           final googleUser = await _googleSignIn.authenticate();
-          if (googleUser != null) {
-            final googleAuth = await googleUser.authentication;
-            final credential =
-                GoogleAuthProvider.credential(idToken: googleAuth.idToken);
-            await user.reauthenticateWithCredential(credential);
-            await user.delete();
-          }
+          final googleAuth = await googleUser.authentication;
+          final credential = GoogleAuthProvider.credential(
+            idToken: googleAuth.idToken,
+          );
+          await user.reauthenticateWithCredential(credential);
+          await user.delete();
         } else {
           rethrow;
         }
@@ -233,8 +231,8 @@ class GoogleAuthService {
     if (authorization == null) {
       if (!allowInteractive) return null;
 
-      final finalAuthorization =
-          await _currentUser!.authorizationClient.authorizeScopes(_scopes);
+      final finalAuthorization = await _currentUser!.authorizationClient
+          .authorizeScopes(_scopes);
       return finalAuthorization.authClient(scopes: _scopes);
     }
 

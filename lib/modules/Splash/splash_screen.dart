@@ -1,4 +1,3 @@
-import 'package:flutter_svg/svg.dart';
 import 'package:split_trip/core/const/app_assets.dart';
 import 'package:split_trip/core/router/app_pages.dart';
 import 'package:split_trip/core/sizer/app_size.dart';

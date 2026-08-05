@@ -10,20 +10,20 @@ class TripCard extends StatelessWidget {
     required this.title,
     required this.members,
     required this.amount,
-    required this.statusText,
+    // required this.statusText,
     required this.icon,
     required this.gradient,
-    required this.isOwe,
+    // required this.isOwe,
     this.onTap,
   });
 
   final String title;
   final String members;
   final String amount;
-  final String statusText;
+  // final String statusText;
   final IconData icon;
   final List<Color> gradient;
-  final bool isOwe;
+  // final bool isOwe;
   final VoidCallback? onTap;
 
   @override
@@ -68,36 +68,45 @@ class TripCard extends StatelessWidget {
           style: theme.textTheme.bodySmall,
         ),
 
-        trailing: RichText(
-          textAlign: TextAlign.end,
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: statusText,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: isOwe ? AppColors.error : AppColors.income,
-                ),
-              ),
-               TextSpan(text: '\n'),
+        trailing: FittedBox(
+          child: AppAutoSizeText(
+            text: amount,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+            ),
+            // RichText(
+            //   textAlign: TextAlign.end,
+            //   text: TextSpan(
+            //     children: [
+            //       TextSpan(
+            //         text: statusText,
+            //         style: theme.textTheme.labelMedium?.copyWith(
+            //           color: isOwe ? AppColors.error : AppColors.income,
+            //         ),
+            //       ),
+            //       TextSpan(text: '\n'),
 
-              WidgetSpan(
-                alignment: PlaceholderAlignment.middle,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: 80),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      amount,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: isOwe ? AppColors.error : AppColors.income,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            //       WidgetSpan(
+            //         alignment: PlaceholderAlignment.middle,
+            //         child: ConstrainedBox(
+            //           constraints: BoxConstraints(maxWidth: 80),
+            //           child: FittedBox(
+            //             fit: BoxFit.scaleDown,
+            //             alignment: Alignment.centerRight,
+            //             child: Text(
+            //               amount,
+            //               style: theme.textTheme.titleSmall?.copyWith(
+            //                 color: isOwe ? AppColors.error : AppColors.income,
+            //                 fontWeight: FontWeight.w600,
+            //               ),
+            //             ),
+            //           ),
+            //         ),
+            //       ),
+            //     ],
+            //   ),
+            // ),
           ),
         ),
       ),

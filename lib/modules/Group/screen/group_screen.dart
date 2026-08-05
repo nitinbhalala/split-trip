@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:split_trip/core/common/widgets/app_snackbar.dart';
+import 'package:split_trip/core/common/widgets/app_alert_dialog.dart';
 import 'package:split_trip/core/common/widgets/common_app_bar.dart';
 import 'package:split_trip/core/common/widgets/custom_text_field.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
@@ -51,29 +51,35 @@ class _GroupScreenState extends State<GroupScreen> {
   }
 
   void _confirmDeleteGroup(int groupId, String groupName) {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text("Delete Group"),
-        content: Text("Are you sure you want to delete '$groupName'?"),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+    AppAlertDialog.show(
+      titleText: "Delete Group", //dharmik snackbar sho
+      contentText: "Are you sure you want to delete '$groupName'?",
+      actions: [
+        TextButton(
+          onPressed: () => Get.back(),
+          child: Text(
+            "Cancel",
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
-            onPressed: () async {
-              Get.back();
-              final success = await _groupController.deleteGroup(groupId);
-              if (success) {
-                AppSnackbar.success(message: "Group deleted successfully.");
-              }
-            },
-            child: const Text("Delete"),
           ),
-        ],
-      ),
+        ),
+        TextButton(
+          onPressed: () async {
+            Get.back();
+            // final success = await _groupController.deleteGroup(groupId);
+            // if (success) {
+            //   AppSnackbar.success(message: "Group deleted successfully.");
+            // }
+          },
+          child: Text(
+            "Delete",
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(color: AppColors.error),
+          ),
+        ),
+      ],
     );
   }
 
@@ -126,8 +132,11 @@ class _GroupScreenState extends State<GroupScreen> {
                   separatorBuilder: (_, _) => AppSize.gapH(10),
                   itemBuilder: (context, index) {
                     final item = filteredGroups[index];
+                    final pendingExp =
+                        _groupController.groupPendingExpenses[item.id] ?? 0.0;
                     return GroupListItem(
                       item: item,
+                      totalExpense: pendingExp,
                       onDeleteConfirm: _confirmDeleteGroup,
                     );
                   },
@@ -140,7 +149,7 @@ class _GroupScreenState extends State<GroupScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showCreateGroupDialog,
         backgroundColor: AppColors.primaryDark,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.white,
         elevation: 4,
         icon: const Icon(Icons.group_add_rounded),
         label: const Text(

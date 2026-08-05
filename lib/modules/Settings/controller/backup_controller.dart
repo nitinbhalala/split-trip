@@ -1,3 +1,4 @@
+import 'package:split_trip/core/common/widgets/app_alert_dialog.dart';
 import 'package:split_trip/core/common/widgets/app_logger.dart';
 import 'package:split_trip/core/common/widgets/app_snackbar.dart';
 import 'package:split_trip/core/router/app_pages.dart';
@@ -73,7 +74,9 @@ class BackupController extends GetxController {
       // Log success or fail event
       await AnalyticsService.logBackup(
         success: result.success,
-        error: result.success ? null : (result.error ?? "Failed to perform backup."),
+        error: result.success
+            ? null
+            : (result.error ?? "Failed to perform backup."),
       );
 
       if (result.success) {
@@ -107,29 +110,25 @@ class BackupController extends GetxController {
       return;
     }
 
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text("Restore Database"),
-        content: const Text(
+    AppAlertDialog.show(
+      titleText: "Restore Database",
+      contentText:
           "Are you sure you want to restore from Google Drive?\n\n"
           "This will overwrite and permanently delete your current local accounts, categories, and transactions.",
-        ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              Get.back();
-              _executeRestore();
-            },
-            child: const Text("Overwrite & Restore"),
+      actions: [
+        TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
           ),
-        ],
-      ),
+          onPressed: () {
+            Get.back();
+            _executeRestore();
+          },
+          child: const Text("Overwrite & Restore"),
+        ),
+      ],
     );
   }
 
@@ -163,7 +162,9 @@ class BackupController extends GetxController {
       // Log success or fail event
       await AnalyticsService.logRestore(
         success: result.success,
-        error: result.success ? null : (result.error ?? "Failed to restore database."),
+        error: result.success
+            ? null
+            : (result.error ?? "Failed to restore database."),
       );
 
       if (result.success) {
@@ -234,71 +235,60 @@ class BackupController extends GetxController {
   }
 
   void _showIncompleteProfileDialog() {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text("Incomplete Profile"),
-        content: const Text(
+    AppAlertDialog.show(
+      titleText: "Incomplete Profile",
+      contentText:
           "An email address is required inside your Profile details to perform backups. Please update it first.",
+      actions: [
+        TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
+        ElevatedButton(
+          onPressed: () {
+            Get.back();
+            Get.toNamed(AppRoutes.profile);
+          },
+          child: const Text("Go to Profile"),
         ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
-          ElevatedButton(
-            onPressed: () {
-              Get.back();
-              Get.toNamed(AppRoutes.profile);
-            },
-            child: const Text("Go to Profile"),
-          ),
-        ],
-      ),
+      ],
     );
   }
 
   void _showEmailMismatchDialog(String message, {required bool isBackup}) {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text("Email Mismatch"),
-        content: Text(
+    AppAlertDialog.show(
+      titleText: "Email Mismatch",
+      contentText:
           "$message\n\n"
           "Would you like to sign out of the current Google account and switch to another account?",
+      actions: [
+        TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
+        ElevatedButton(
+          onPressed: () async {
+            Get.back(); // close dialog
+
+            // Sign out from the current mismatch account
+            _showLoaderDialog("Signing out...");
+            await GoogleAuthService.signOut();
+            await _hideLoaderDialog();
+
+            // Re-trigger the flow with interactive sign-in
+            if (isBackup) {
+              backupToGoogleDrive();
+            } else {
+              _executeRestore();
+            }
+          },
+          child: const Text("Switch Account"),
         ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
-          ElevatedButton(
-            onPressed: () async {
-              Get.back(); // close dialog
-
-              // Sign out from the current mismatch account
-              _showLoaderDialog("Signing out...");
-              await GoogleAuthService.signOut();
-              await _hideLoaderDialog();
-
-              // Re-trigger the flow with interactive sign-in
-              if (isBackup) {
-                backupToGoogleDrive();
-              } else {
-                _executeRestore();
-              }
-            },
-            child: const Text("Switch Account"),
-          ),
-        ],
-      ),
+      ],
     );
   }
 
   void _showErrorDialog(String title, String message) {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          ElevatedButton(onPressed: () => Get.back(), child: const Text("OK")),
-        ],
-      ),
+    AppAlertDialog.show(
+      titleText: title,
+      contentText: message,
+      actions: [
+        ElevatedButton(onPressed: () => Get.back(), child: const Text("OK")),
+      ],
     );
   }
 }

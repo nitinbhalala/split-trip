@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:split_trip/core/common/button/app_elevated_button.dart';
+import 'package:split_trip/core/common/widgets/app_alert_dialog.dart';
 import 'package:split_trip/core/common/widgets/app_snackbar.dart';
 import 'package:split_trip/core/common/widgets/custom_text_field.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
@@ -76,72 +77,75 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(2),
+        return SafeArea(
+          bottom: true,
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-              AppSize.gapH(16),
-              Text(
-                "Add people to ${widget.controller.groupName.value}",
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              AppSize.gapH(16),
+                AppSize.gapH(16),
+                Text(
+                  "Add people to ${widget.controller.groupName.value}",
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                AppSize.gapH(16),
 
-              CustomTextField(
-                title: "",
-                controller: nameController,
-                hint: "Member Name (e.g. john doe)",
-                prefixIcon: Icon(Icons.person),
-              ),
-              AppSize.gapH(12),
+                CustomTextField(
+                  title: "",
+                  controller: nameController,
+                  hint: "Member Name (e.g. john doe)",
+                  prefixIcon: Icon(Icons.person),
+                ),
+                AppSize.gapH(12),
 
-              CustomTextField(
-                title: "",
-                controller: phoneController,
-                hint: "Phone / Contact (Optional)",
-                prefixIcon: Icon(Icons.phone_rounded),
-                keyBoardType: TextInputType.phone,
-              ),
-              AppSize.gapH(20),
+                CustomTextField(
+                  title: "",
+                  controller: phoneController,
+                  hint: "Phone / Contact (Optional)",
+                  prefixIcon: Icon(Icons.phone_rounded),
+                  keyBoardType: TextInputType.phone,
+                ),
+                AppSize.gapH(20),
 
-              AppElevatedButton(
-                title: "Add Member",
-                onPressed: () async {
-                  final name = nameController.text.trim();
-                  if (name.isNotEmpty) {
-                    Get.back();
-                    final success = await widget.controller.addMember(
-                      name: name,
-                      phone: phoneController.text.trim(),
-                    );
-                    if (success) {
-                      AppSnackbar.success(message: "$name added to group!");
+                AppElevatedButton(
+                  title: "Add Member",
+                  onPressed: () async {
+                    final name = nameController.text.trim();
+                    if (name.isNotEmpty) {
+                      Get.back();
+                      final success = await widget.controller.addMember(
+                        name: name,
+                        phone: phoneController.text.trim(),
+                      );
+                      if (success) {
+                        AppSnackbar.success(message: "$name added to group!");
+                      }
+                    } else {
+                      AppSnackbar.error(
+                        message: "Please enter a valid member name.",
+                      );
                     }
-                  } else {
-                    AppSnackbar.error(
-                      message: "Please enter a valid member name.",
-                    );
-                  }
-                },
-              ),
-            ],
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -149,44 +153,40 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
   }
 
   void _confirmRemoveMember(int memberId, String memberName) {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        title: Text("Do You want to remove $memberName from  group?"),
-        content: Text(
-          // "They will not be able to send or view new messages in this group"
+    AppAlertDialog.show(
+      borderRadius: 10,
+      titleText: "Do You want to remove $memberName from  group?",
+      contentText:
           "This member will be removed from the group and will no longer participate in future expense splits.",
+      actionsAlignment: MainAxisAlignment.spaceBetween,
+      actions: [
+        InkWell(
+          onTap: () => Get.back(),
+          child: Text(
+            "Cancel",
+            style: Theme.of(context).textTheme.titleSmall!.copyWith(
+              color: AppColors.primary,
+              fontWeight: .w500,
+            ),
+          ),
         ),
-        actionsAlignment: MainAxisAlignment.spaceBetween,
-        actions: [
-          InkWell(
-            onTap: () => Get.back(),
-            child: Text(
-              "Cancel",
-              style: Theme.of(context).textTheme.titleSmall!.copyWith(
-                color: AppColors.primary,
-                fontWeight: .w500,
-              ),
+        InkWell(
+          onTap: () async {
+            Get.back();
+            final success = await widget.controller.deleteMember(memberId);
+            if (success) {
+              AppSnackbar.success(message: "$memberName removed from group.");
+            }
+          },
+          child: Text(
+            "Remove from group",
+            style: Theme.of(context).textTheme.titleSmall!.copyWith(
+              color: AppColors.primary,
+              fontWeight: .w500,
             ),
           ),
-          InkWell(
-            onTap: () async {
-              Get.back();
-              final success = await widget.controller.deleteMember(memberId);
-              if (success) {
-                AppSnackbar.success(message: "$memberName removed from group.");
-              }
-            },
-            child: Text(
-              "Remove from group",
-              style: Theme.of(context).textTheme.titleSmall!.copyWith(
-                color: AppColors.primary,
-                fontWeight: .w500,
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -204,254 +204,266 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
           onPressed: () => Get.back(),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: AppSize.only(left: 12, right: 12, top: 0, bottom: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Obx(() {
-                final colorVal = widget.controller.colorValue.value != 0
-                    ? widget.controller.colorValue.value
-                    : widget.group.colorValue;
-                final iconStr = widget.controller.iconName.value.isNotEmpty
-                    ? widget.controller.iconName.value
-                    : widget.group.iconName;
-                return CircleAvatar(
-                  radius: AppSize.sp(30),
-                  backgroundColor: Color(colorVal),
-                  child: Icon(
-                    AppIcons.getIcon(iconStr),
-                    color: AppColors.white,
-                    size: AppSize.sp(30),
-                  ),
-                );
-              }),
-            ),
-            AppSize.gapH(5),
+      body: SafeArea(
+        bottom: true,
+        top: false,
+        child: Padding(
+          padding: AppSize.only(left: 12, right: 12, top: 0, bottom: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Obx(() {
+                  final colorVal = widget.controller.colorValue.value != 0
+                      ? widget.controller.colorValue.value
+                      : widget.group.colorValue;
+                  final iconStr = widget.controller.iconName.value.isNotEmpty
+                      ? widget.controller.iconName.value
+                      : widget.group.iconName;
+                  return CircleAvatar(
+                    radius: AppSize.sp(30),
+                    backgroundColor: Color(colorVal),
+                    child: Icon(
+                      AppIcons.getIcon(iconStr),
+                      color: AppColors.white,
+                      size: AppSize.sp(30),
+                    ),
+                  );
+                }),
+              ),
+              AppSize.gapH(5),
 
-            // Group Name Title with Edit Pen Icon (Image 3 Style)
-            Center(
-              child: Obx(
-                () => InkWell(
-                  onTap: _showEditGroupBottomSheet,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: AppSize.symmetric(horizontal: 12, vertical: 6),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            widget.controller.groupName.value.isNotEmpty
-                                ? widget.controller.groupName.value
-                                : widget.group.name,
-                            style: theme.textTheme.headlineSmall?.copyWith(),
-                            textAlign: TextAlign.center,
+              // Group Name Title with Edit Pen Icon (Image 3 Style)
+              Center(
+                child: Obx(
+                  () => InkWell(
+                    onTap: _showEditGroupBottomSheet,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: AppSize.symmetric(horizontal: 12, vertical: 6),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              widget.controller.groupName.value.isNotEmpty
+                                  ? widget.controller.groupName.value
+                                  : widget.group.name,
+                              style: theme.textTheme.headlineSmall?.copyWith(),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
-                        ),
-                        AppSize.gapW(8),
-                        Icon(
-                          Icons.edit_outlined,
-                          size: AppSize.sp(16),
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ],
+                          AppSize.gapW(8),
+                          Icon(
+                            Icons.edit_outlined,
+                            size: AppSize.sp(16),
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
 
-            // Description Subtitle Line (If present)
-            Center(
-              child: Obx(() {
-                final desc = widget.controller.groupDescription.value.isNotEmpty
-                    ? widget.controller.groupDescription.value
-                    : widget.group.description;
-                if (desc.trim().isEmpty) return const SizedBox.shrink();
-                return Padding(
-                  padding: AppSize.only(top: 2, bottom: 4),
-                  child: Text(
-                    desc,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+              // Description Subtitle Line (If present)
+              Center(
+                child: Obx(() {
+                  final desc =
+                      widget.controller.groupDescription.value.isNotEmpty
+                      ? widget.controller.groupDescription.value
+                      : widget.group.description;
+                  if (desc.trim().isEmpty) return const SizedBox.shrink();
+                  return Padding(
+                    padding: AppSize.only(top: 2, bottom: 4),
+                    child: Text(
+                      desc,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
+                  );
+                }),
+              ),
+              AppSize.gapH(10),
+
+              // "+ Add people" Button Row (Image 3 Style)
+              InkWell(
+                onTap: _showAddPeopleDialog,
+                borderRadius: BorderRadius.circular(12),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.person_add_alt_1_rounded,
+                      color: AppColors.primary,
+                      size: AppSize.sp(22),
+                    ),
+                    AppSize.gapW(5),
+                    Text(
+                      " Add people",
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              AppSize.gapH(12),
+
+              // "Group members (X)" Section Title (Image 3 Style)
+              Obx(
+                () => Text(
+                  "Group members (${widget.controller.members.length})",
+                  style: theme.textTheme.titleMedium?.copyWith(),
+                ),
+              ),
+              AppSize.gapH(12),
+
+              // Group Members List
+              Obx(() {
+                final members = widget.controller.members;
+                if (members.isEmpty) {
+                  return Padding(
+                    padding: AppSize.symmetric(vertical: 16),
+                    child: Text("No members added yet."),
+                  );
+                }
+
+                return Expanded(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: members.length,
+                    separatorBuilder: (_, _) => AppSize.gapH(0),
+                    itemBuilder: (context, index) {
+                      final member = members[index];
+                      final isOwner = index == 0;
+
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        leading: CircleAvatar(
+                          radius: AppSize.sp(16),
+                          backgroundColor: theme.colorScheme.primary,
+                          child: Text(
+                            member.name.isNotEmpty
+                                ? member.name[0].toUpperCase()
+                                : "M",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.white,
+                            ),
+                          ),
+                        ),
+                        title: Text(
+                          member.name,
+                          style: theme.textTheme.titleSmall,
+                        ),
+                        trailing: isOwner
+                            ? Container(
+                                padding: AppSize.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1D4ED8),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Text(
+                                  "Admin",
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    color: AppColors.white,
+                                  ),
+                                ),
+                              )
+                            : IconButton(
+                                icon: Icon(
+                                  Icons.do_not_disturb_on_outlined,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  size: AppSize.sp(24),
+                                ),
+                                onPressed: () {
+                                  if (member.id != null) {
+                                    _confirmRemoveMember(
+                                      member.id!,
+                                      member.name,
+                                    );
+                                  }
+                                },
+                              ),
+                      );
+
+                      // Row(
+                      //   children: [
+                      //     // Avatar
+                      //     CircleAvatar(
+                      //       radius: AppSize.sp(16),
+                      //       backgroundColor: theme.colorScheme.primary,
+                      //       child: Text(
+                      //         member.name.isNotEmpty
+                      //             ? member.name[0].toUpperCase()
+                      //             : "M",
+                      //         style: TextStyle(
+                      //           fontWeight: FontWeight.w700,
+
+                      //           color: AppColors.white,
+                      //         ),
+                      //       ),
+                      //     ),
+                      //     AppSize.gapW(14),
+
+                      //     // Name
+                      //     Expanded(
+                      //       child: Text(
+                      //         member.name,
+                      //         style: theme.textTheme.titleSmall,
+                      //       ),
+                      //     ),
+
+                      //     // Admin Badge OR Minus Remove Button (Image 3 Style)
+                      //     if (isOwner)
+                      //       Container(
+                      //         padding: AppSize.symmetric(
+                      //           horizontal: 12,
+                      //           vertical: 4,
+                      //         ),
+                      //         decoration: BoxDecoration(
+                      //           color: const Color(
+                      //             0xFF1D4ED8,
+                      //           ), // GPay Blue Admin Badge
+                      //           borderRadius: BorderRadius.circular(16),
+                      //         ),
+                      //         child: Text(
+                      //           "Admin",
+                      //           style: theme.textTheme.labelMedium!.copyWith(
+                      //             color: AppColors.white,
+                      //           ),
+                      //         ),
+                      //       )
+                      //     else
+                      //       Center(
+                      //         child: GestureDetector(
+                      //           child: Icon(
+                      //             Icons
+                      //                 .do_not_disturb_on_outlined, // Minus Remove Button
+                      //             color: theme.colorScheme.onSurfaceVariant,
+                      //             size: AppSize.sp(22),
+                      //           ),
+                      //           onTap: () {
+                      //             if (member.id != null) {
+                      //               _confirmRemoveMember(member.id!, member.name);
+                      //             }
+                      //           },
+                      //         ),
+                      //       ),
+                      //   ],
+                      // );
+                    },
                   ),
                 );
               }),
-            ),
-            AppSize.gapH(10),
-
-            // "+ Add people" Button Row (Image 3 Style)
-            InkWell(
-              onTap: _showAddPeopleDialog,
-              borderRadius: BorderRadius.circular(12),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.person_add_alt_1_rounded,
-                    color: AppColors.primary,
-                    size: AppSize.sp(22),
-                  ),
-                  AppSize.gapW(5),
-                  Text(
-                    " Add people",
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            AppSize.gapH(12),
-
-            // "Group members (X)" Section Title (Image 3 Style)
-            Obx(
-              () => Text(
-                "Group members (${widget.controller.members.length})",
-                style: theme.textTheme.titleMedium?.copyWith(),
-              ),
-            ),
-            AppSize.gapH(12),
-
-            // Group Members List
-            Obx(() {
-              final members = widget.controller.members;
-              if (members.isEmpty) {
-                return Padding(
-                  padding: AppSize.symmetric(vertical: 16),
-                  child: Text("No members added yet."),
-                );
-              }
-
-              return ListView.separated(
-                physics: const NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                itemCount: members.length,
-                separatorBuilder: (_, _) => AppSize.gapH(0),
-                itemBuilder: (context, index) {
-                  final member = members[index];
-                  final isOwner = index == 0;
-
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                    leading: CircleAvatar(
-                      radius: AppSize.sp(16),
-                      backgroundColor: theme.colorScheme.primary,
-                      child: Text(
-                        member.name.isNotEmpty
-                            ? member.name[0].toUpperCase()
-                            : "M",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.white,
-                        ),
-                      ),
-                    ),
-                    title: Text(member.name, style: theme.textTheme.titleSmall),
-                    trailing: isOwner
-                        ? Container(
-                            padding: AppSize.symmetric(
-                              horizontal: 12,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1D4ED8),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Text(
-                              "Admin",
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                color: AppColors.white,
-                              ),
-                            ),
-                          )
-                        : IconButton(
-                            icon: Icon(
-                              Icons.do_not_disturb_on_outlined,
-                              color: theme.colorScheme.onSurfaceVariant,
-                              size: AppSize.sp(24),
-                            ),
-                            onPressed: () {
-                              if (member.id != null) {
-                                _confirmRemoveMember(member.id!, member.name);
-                              }
-                            },
-                          ),
-                  );
-
-                  // Row(
-                  //   children: [
-                  //     // Avatar
-                  //     CircleAvatar(
-                  //       radius: AppSize.sp(16),
-                  //       backgroundColor: theme.colorScheme.primary,
-                  //       child: Text(
-                  //         member.name.isNotEmpty
-                  //             ? member.name[0].toUpperCase()
-                  //             : "M",
-                  //         style: TextStyle(
-                  //           fontWeight: FontWeight.w700,
-
-                  //           color: AppColors.white,
-                  //         ),
-                  //       ),
-                  //     ),
-                  //     AppSize.gapW(14),
-
-                  //     // Name
-                  //     Expanded(
-                  //       child: Text(
-                  //         member.name,
-                  //         style: theme.textTheme.titleSmall,
-                  //       ),
-                  //     ),
-
-                  //     // Admin Badge OR Minus Remove Button (Image 3 Style)
-                  //     if (isOwner)
-                  //       Container(
-                  //         padding: AppSize.symmetric(
-                  //           horizontal: 12,
-                  //           vertical: 4,
-                  //         ),
-                  //         decoration: BoxDecoration(
-                  //           color: const Color(
-                  //             0xFF1D4ED8,
-                  //           ), // GPay Blue Admin Badge
-                  //           borderRadius: BorderRadius.circular(16),
-                  //         ),
-                  //         child: Text(
-                  //           "Admin",
-                  //           style: theme.textTheme.labelMedium!.copyWith(
-                  //             color: AppColors.white,
-                  //           ),
-                  //         ),
-                  //       )
-                  //     else
-                  //       Center(
-                  //         child: GestureDetector(
-                  //           child: Icon(
-                  //             Icons
-                  //                 .do_not_disturb_on_outlined, // Minus Remove Button
-                  //             color: theme.colorScheme.onSurfaceVariant,
-                  //             size: AppSize.sp(22),
-                  //           ),
-                  //           onTap: () {
-                  //             if (member.id != null) {
-                  //               _confirmRemoveMember(member.id!, member.name);
-                  //             }
-                  //           },
-                  //         ),
-                  //       ),
-                  //   ],
-                  // );
-                },
-              );
-            }),
-          ],
+            ],
+          ),
         ),
       ),
     );

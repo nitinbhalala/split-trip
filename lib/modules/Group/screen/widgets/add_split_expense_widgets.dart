@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:split_trip/core/common/helper/app_helper.dart';
+import 'package:split_trip/core/common/loader/app_shimmer.dart';
 import 'package:split_trip/core/common/widgets/app_auto_size_text.dart';
 import 'package:split_trip/core/common/widgets/app_card.dart';
 import 'package:split_trip/core/common/widgets/custom_text_field.dart';
@@ -234,7 +235,7 @@ class AddSplitMemberListItem extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: AppSize.symmetric(vertical: 8),
       child: Row(
         children: [
           // Checkbox Selection

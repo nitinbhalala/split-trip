@@ -107,7 +107,6 @@ class SettingsScreen extends StatelessWidget {
                               ? "Dark"
                               : "System",
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: AppColors.subtitle,
                             fontSize: AppSize.sp(11),
                           ),
                         ),
@@ -126,7 +125,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ],
             ),
-                    // Section Title: Backup & Restore
+            // Section Title: Backup & Restore
             Text(
               "Backup & Restore",
               style: theme.textTheme.titleSmall?.copyWith(
@@ -145,7 +144,7 @@ class SettingsScreen extends StatelessWidget {
                   iconColor: Colors.blue,
                   title: "Backup to Google Drive",
                   subtitle: "Save accounts and transactions online",
-            
+
                   onTap: () {
                     final backupController = Get.find<BackupController>();
                     backupController.backupToGoogleDrive();
@@ -157,7 +156,7 @@ class SettingsScreen extends StatelessWidget {
                   iconColor: Colors.green,
                   title: "Restore from Google Drive",
                   subtitle: "Restore accounts and transactions backup",
-            
+
                   onTap: () {
                     final backupController = Get.find<BackupController>();
                     backupController.restoreFromGoogleDrive();

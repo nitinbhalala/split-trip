@@ -12,8 +12,8 @@ class InitialBinding extends Bindings {
   @override
   void dependencies() {
     // Only core startup controllers required at Splash screen / app launch
-    Get.lazyPut(() => ThemeController(), fenix: true);
-    Get.lazyPut(() => CurrencyController(), fenix: true);
+    Get.put(ThemeController(), permanent: true);
+    Get.put(CurrencyController(), permanent: true);
   }
 }
 

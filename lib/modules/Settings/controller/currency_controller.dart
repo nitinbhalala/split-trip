@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:split_trip/core/common/widgets/app_logger.dart';
 import 'package:split_trip/data/database/database_helper.dart';
 import 'package:split_trip/data/database/db_constants.dart';
 import 'package:split_trip/data/model/currecy_icons_model.dart';
@@ -66,11 +67,5 @@ class CurrencyController extends GetxController {
         AppLogger.error("Error saving selected currency to DB: $e");
       }
     }
-  }
-}
-// Stub standard AppLogger helper to ensure clean compilation
-class AppLogger {
-  static void error(String message) {
-    print("❌ [ERROR] $message");
   }
 }

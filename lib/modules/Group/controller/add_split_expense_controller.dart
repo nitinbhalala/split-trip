@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:split_trip/core/common/helper/app_helper.dart';
 import 'package:split_trip/core/common/widgets/app_snackbar.dart';
+import 'package:split_trip/data/model/expense_metadata_model.dart';
 import 'package:split_trip/modules/Group/controller/group_detail_controller.dart';
 
 class AddSplitExpenseController extends GetxController {
@@ -9,7 +11,8 @@ class AddSplitExpenseController extends GetxController {
 
   AddSplitExpenseController({required this.groupDetailController});
 
-  final RxInt step = 1.obs; // 1: Enter Amount, 2: Select Payer, 3: Split Allocation
+  final RxInt step =
+      1.obs; // 1: Enter Amount, 2: Select Payer, 3: Split Allocation
   final RxString amountStr = "0".obs;
   final RxString description = "".obs;
   final TextEditingController descController = TextEditingController();
@@ -367,14 +370,32 @@ class AddSplitExpenseController extends GetxController {
     if (!isValid) return;
 
     final descText = description.value.trim();
-    final titleStr = descText.isNotEmpty ? descText : "Split Request";
+    final titleStr = descText;
     final payer = paidByMemberName;
 
-    final displayTitle = "$titleStr (Paid by $payer)";
+    final Map<String, double> splitsMap = {};
+    for (final id in selectedMemberIds) {
+      final member = groupDetailController.members.firstWhereOrNull(
+        (m) => m.id == id,
+      );
+      final name = member?.name ?? "Member #$id";
+      splitsMap[name] = calculateDisplayShare(id);
+    }
+
+    final metadata = ExpenseMetadataModel(
+      title: titleStr,
+      paidByName: payer,
+      paidById: selectedPayerId.value,
+      splits: splitsMap,
+      paidMemberNames: [payer],
+    );
+
+    final jsonPayload = jsonEncode(metadata.toMap());
 
     final success = await groupDetailController.addSplitExpenseRequest(
-      title: displayTitle,
+      title: jsonPayload,
       amount: totalAmount,
+      senderName: payer,
     );
 
     if (success) {
