@@ -1,10 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:split_trip/core/router/app_pages.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
 import 'package:split_trip/core/theme/app_color.dart';
 import 'package:split_trip/data/model/group_model.dart';
 import 'package:split_trip/modules/Group/controller/group_detail_controller.dart';
-import 'package:split_trip/modules/Group/screen/group_info_screen.dart';
 
 class GroupDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
   final GroupModel group;
@@ -33,8 +35,6 @@ class GroupDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
         ? group.name[0].toUpperCase()
         : 'G';
 
-    final Color primaryColor = gradient?.first ?? AppColors.primary;
-
     return AppBar(
       backgroundColor: theme.scaffoldBackgroundColor,
       elevation: 0,
@@ -49,36 +49,41 @@ class GroupDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
         focusColor: Colors.transparent,
         splashColor: Colors.transparent,
         onTap: () {
-          Get.to(
-            () => GroupInfoScreen(
-              group: group,
-              controller: controller,
-              gradient: gradient,
-              icon: icon,
-            ),
-          );
+          Get.toNamed(AppRoutes.groupInfo, arguments: group);
         },
         child: Row(
           children: [
             Hero(
               tag: 'group_avatar_${group.id}',
-              child: CircleAvatar(
-                radius: AppSize.r(16),
-                backgroundColor: primaryColor.withValues(alpha: 0.15),
-                child: icon != null
-                    ? Icon(
-                        icon,
-                        color: primaryColor,
-                        size: AppSize.sp(18),
-                      )
-                    : Text(
-                        groupInitial,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: primaryColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-              ),
+              child: Obx(() {
+                final imgPath = controller.imagePath.value.isNotEmpty
+                    ? controller.imagePath.value
+                    : group.imagePath;
+                final hasImg = imgPath.isNotEmpty && File(imgPath).existsSync();
+
+                if (hasImg) {
+                  return CircleAvatar(
+                    radius: AppSize.r(16),
+                    backgroundImage: FileImage(File(imgPath)),
+                  );
+                }
+
+                final colorVal = controller.colorValue.value != 0
+                    ? controller.colorValue.value
+                    : group.colorValue;
+
+                return CircleAvatar(
+                  radius: AppSize.r(16),
+                  backgroundColor: Color(colorVal),
+                  child: Text(
+                    groupInitial,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: AppColors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                );
+              }),
             ),
             AppSize.gapW(10),
             Expanded(
@@ -110,23 +115,14 @@ class GroupDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         IconButton(
           padding: AppSize.only(right: 20),
-          icon: Icon(
-            Icons.group_add_outlined,
-            color: theme.colorScheme.onSurface,
-          ),
+          icon: Icon(Icons.group_rounded, color: theme.colorScheme.primary),
           onPressed: () {
-            Get.to(
-              () => GroupInfoScreen(
-                group: group,
-                controller: controller,
-                gradient: gradient,
-                icon: icon,
-              ),
-            );
+            Get.toNamed(AppRoutes.groupInfo, arguments: group);
           },
         ),
         AppSize.gapW(5),
       ],
+      shape: Border(bottom: BorderSide(color: theme.dividerColor, width: 1.2)),
       bottom: PreferredSize(
         preferredSize: Size.fromHeight(AppSize.h(48)),
         child: Column(
@@ -144,8 +140,8 @@ class GroupDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
               indicatorSize: TabBarIndicatorSize.tab,
               tabs: [
-                Tab(height: AppSize.h(30), text: "Chat"),
-                Tab(height: AppSize.h(30), text: "Expenses"),
+                Tab(height: AppSize.h(30), text: "Split"),
+                Tab(height: AppSize.h(30), text: "Summary"),
               ],
             ),
           ],

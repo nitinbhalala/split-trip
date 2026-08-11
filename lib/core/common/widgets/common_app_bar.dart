@@ -9,7 +9,8 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
   final List<Widget>? actions;
   final VoidCallback? onBack;
   final IconData? leadingIcon;
-
+  final Color? backgroundColor;
+  final bool? enableBottomBorder;
   const CommonAppBar({
     super.key,
     required this.title,
@@ -19,6 +20,8 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.actions,
     this.onBack,
     this.leadingIcon,
+    this.backgroundColor,
+    this.enableBottomBorder,
   });
 
   @override
@@ -32,9 +35,12 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
       automaticallyImplyLeading: true,
       elevation: 0,
       scrolledUnderElevation: 1,
+      backgroundColor: backgroundColor,
       centerTitle: centerTitle,
       // toolbarHeight: AppSize.h(45),
-      shape: Border(bottom: BorderSide(color: theme.dividerColor, width: 1)),
+      shape: enableBottomBorder == true
+          ? Border(bottom: BorderSide(color: theme.dividerColor, width: 1))
+          : null,
 
       leading: shouldShowBack
           ? IconButton(

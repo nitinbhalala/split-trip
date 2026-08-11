@@ -89,7 +89,6 @@ class ThemeSelectionScreen extends StatelessWidget {
                   subtitle: Text(
                     t['subtitle'] as String,
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: AppColors.subtitle,
                       fontSize: AppSize.sp(10.5),
                     ),
                   ),

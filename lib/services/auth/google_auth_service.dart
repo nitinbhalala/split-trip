@@ -182,7 +182,7 @@ class GoogleAuthService {
       } on FirebaseAuthException catch (e) {
         if (e.code == 'requires-recent-login') {
           final googleUser = await _googleSignIn.authenticate();
-          final googleAuth = await googleUser.authentication;
+          final googleAuth = googleUser.authentication;
           final credential = GoogleAuthProvider.credential(
             idToken: googleAuth.idToken,
           );

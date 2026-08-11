@@ -4,6 +4,7 @@ class GroupModel {
   final String description;
   final String iconName;
   final int colorValue;
+  final String imagePath;
   final String? createdAt;
   final String? updatedAt;
 
@@ -13,6 +14,7 @@ class GroupModel {
     this.description = "",
     this.iconName = "group_work",
     this.colorValue = 0xFF3B82F6,
+    this.imagePath = "",
     this.createdAt,
     this.updatedAt,
   });
@@ -24,6 +26,7 @@ class GroupModel {
       'description': description,
       'icon_name': iconName,
       'color_value': colorValue,
+      'image_path': imagePath,
       'created_at': createdAt,
       'updated_at': updatedAt,
     };
@@ -36,6 +39,7 @@ class GroupModel {
       description: (map['description'] as String?) ?? "",
       iconName: (map['icon_name'] as String?) ?? "group_work",
       colorValue: (map['color_value'] as int?) ?? 0xFF3B82F6,
+      imagePath: (map['image_path'] as String?) ?? "",
       createdAt: map['created_at'] as String?,
       updatedAt: map['updated_at'] as String?,
     );

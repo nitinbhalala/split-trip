@@ -15,6 +15,7 @@ class GroupDetailController extends GetxController {
   final RxString groupDescription = "".obs;
   final RxString iconName = "".obs;
   final RxInt colorValue = 0.obs;
+  final RxString imagePath = "".obs;
 
   GroupDetailController({required this.groupId});
 
@@ -44,6 +45,7 @@ class GroupDetailController extends GetxController {
         groupDescription.value = (groupData['description'] as String?) ?? "";
         iconName.value = (groupData['icon_name'] as String?) ?? "group_work";
         colorValue.value = (groupData['color_value'] as int?) ?? 0xFF3B82F6;
+        imagePath.value = (groupData['image_path'] as String?) ?? "";
       }
 
       // 2. Fetch Members
@@ -183,6 +185,7 @@ class GroupDetailController extends GetxController {
     String? description,
     String? iconName,
     int? colorValue,
+    String? imagePath,
   }) async {
     if (name.trim().isEmpty) return false;
     try {
@@ -190,8 +193,9 @@ class GroupDetailController extends GetxController {
       final values = <String, dynamic>{
         'name': name.trim(),
         if (description != null) 'description': description.trim(),
-        'icon_name': iconName,
-        'color_value': colorValue,
+        'icon_name': ?iconName,
+        'color_value': ?colorValue,
+        'image_path': ?imagePath,
       };
 
       final count = await db.update(
@@ -206,6 +210,7 @@ class GroupDetailController extends GetxController {
         if (description != null) groupDescription.value = description.trim();
         if (iconName != null) this.iconName.value = iconName;
         if (colorValue != null) this.colorValue.value = colorValue;
+        if (imagePath != null) this.imagePath.value = imagePath;
         if (Get.isRegistered<GroupController>()) {
           Get.find<GroupController>().loadGroups();
         }
@@ -341,6 +346,43 @@ class GroupDetailController extends GetxController {
       return false;
     } catch (e) {
       debugPrint("Error adding split expense: $e");
+      return false;
+    }
+  }
+
+  /// Updates an existing Split Expense Request in the group chat feed.
+  Future<bool> updateSplitExpenseRequest({
+    required int messageId,
+    required String title,
+    required double amount,
+    required String senderName,
+  }) async {
+    if (amount <= 0) return false;
+    try {
+      final db = DatabaseHelper.instance;
+      final count = await db.update(
+        table: DBConstants.groupMessagesTable,
+        values: {
+          DBConstants.msgSenderName: senderName,
+          DBConstants.msgText: title.trim().isEmpty ? "Expense" : title.trim(),
+          DBConstants.msgAmount: amount,
+        },
+        where: "${DBConstants.id} = ?",
+        args: [messageId],
+      );
+
+      if (count > 0) {
+        await loadGroupData();
+        if (Get.isRegistered<GroupController>()) {
+          Get.find<GroupController>().loadGroups();
+        }
+        messages.refresh();
+        await BackupService.markDataChanged();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint("Error updating split expense request: $e");
       return false;
     }
   }

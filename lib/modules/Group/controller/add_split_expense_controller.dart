@@ -4,12 +4,21 @@ import 'package:get/get.dart';
 import 'package:split_trip/core/common/helper/app_helper.dart';
 import 'package:split_trip/core/common/widgets/app_snackbar.dart';
 import 'package:split_trip/data/model/expense_metadata_model.dart';
+import 'package:split_trip/data/model/group_message_model.dart';
 import 'package:split_trip/modules/Group/controller/group_detail_controller.dart';
 
 class AddSplitExpenseController extends GetxController {
   final GroupDetailController groupDetailController;
+  final GroupMessageModel? editingMessage;
+  final ExpenseMetadataModel? initialMeta;
 
-  AddSplitExpenseController({required this.groupDetailController});
+  AddSplitExpenseController({
+    required this.groupDetailController,
+    this.editingMessage,
+    this.initialMeta,
+  });
+
+  bool get isEditMode => editingMessage != null;
 
   final RxInt step =
       1.obs; // 1: Enter Amount, 2: Select Payer, 3: Split Allocation
@@ -41,17 +50,63 @@ class AddSplitExpenseController extends GetxController {
       }
     });
 
-    // Select all members by default
+    // Initialize custom controllers for all members
     for (var m in groupDetailController.members) {
       if (m.id != null) {
-        selectedMemberIds.add(m.id!);
         customControllers[m.id!] = TextEditingController();
       }
     }
 
-    // Default selected payer to first member
-    if (groupDetailController.members.isNotEmpty) {
-      selectedPayerId.value = groupDetailController.members.first.id;
+    if (isEditMode && editingMessage != null) {
+      // ── Pre-fill Edit Mode Data ──────────────────────────────────────
+      final amt = editingMessage!.amount;
+      amountStr.value = (amt % 1 == 0) ? amt.toInt().toString() : amt.toString();
+
+      if (initialMeta != null) {
+        description.value = initialMeta!.title;
+        descController.text = initialMeta!.title;
+
+        // Pre-select Payer
+        if (initialMeta!.paidById != null) {
+          selectedPayerId.value = initialMeta!.paidById;
+        } else if (initialMeta!.paidByName.isNotEmpty) {
+          final matchedPayer = groupDetailController.members.firstWhereOrNull(
+            (m) => m.name.toLowerCase() == initialMeta!.paidByName.toLowerCase(),
+          );
+          selectedPayerId.value = matchedPayer?.id;
+        }
+
+        // Pre-select members from splits
+        selectedMemberIds.clear();
+        for (var m in groupDetailController.members) {
+          if (m.id != null && initialMeta!.splits.containsKey(m.name)) {
+            selectedMemberIds.add(m.id!);
+            final shareAmt = initialMeta!.splits[m.name] ?? 0.0;
+            customControllers[m.id!]?.text = shareAmt.toStringAsFixed(2);
+          }
+        }
+      }
+
+      if (selectedPayerId.value == null && groupDetailController.members.isNotEmpty) {
+        selectedPayerId.value = groupDetailController.members.first.id;
+      }
+
+      if (selectedMemberIds.isEmpty) {
+        for (var m in groupDetailController.members) {
+          if (m.id != null) selectedMemberIds.add(m.id!);
+        }
+      }
+    } else {
+      // ── Pre-fill New Expense Data ─────────────────────────────────────
+      for (var m in groupDetailController.members) {
+        if (m.id != null) {
+          selectedMemberIds.add(m.id!);
+        }
+      }
+
+      if (groupDetailController.members.isNotEmpty) {
+        selectedPayerId.value = groupDetailController.members.first.id;
+      }
     }
   }
 
@@ -387,22 +442,40 @@ class AddSplitExpenseController extends GetxController {
       paidByName: payer,
       paidById: selectedPayerId.value,
       splits: splitsMap,
-      paidMemberNames: [payer],
+      paidMemberNames: initialMeta?.paidMemberNames.contains(payer) == true
+          ? initialMeta!.paidMemberNames
+          : [payer],
     );
 
     final jsonPayload = jsonEncode(metadata.toMap());
 
-    final success = await groupDetailController.addSplitExpenseRequest(
-      title: jsonPayload,
-      amount: totalAmount,
-      senderName: payer,
-    );
+    if (isEditMode && editingMessage?.id != null) {
+      final success = await groupDetailController.updateSplitExpenseRequest(
+        messageId: editingMessage!.id!,
+        title: jsonPayload,
+        amount: totalAmount,
+        senderName: payer,
+      );
 
-    if (success) {
-      Get.back();
-      AppSnackbar.success(message: "Split request sent to group!");
+      if (success) {
+        Get.back();
+        AppSnackbar.success(message: "Split request updated successfully!");
+      } else {
+        AppSnackbar.error(message: "Failed to update split request.");
+      }
     } else {
-      AppSnackbar.error(message: "Failed to send split request.");
+      final success = await groupDetailController.addSplitExpenseRequest(
+        title: jsonPayload,
+        amount: totalAmount,
+        senderName: payer,
+      );
+
+      if (success) {
+        Get.back();
+        AppSnackbar.success(message: "Split request sent to group!");
+      } else {
+        AppSnackbar.error(message: "Failed to send split request.");
+      }
     }
   }
 }

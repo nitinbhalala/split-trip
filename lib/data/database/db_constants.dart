@@ -1,6 +1,6 @@
 class DBConstants {
   static const String databaseName = "split_trip.db";
-  static const int databaseVersion = 4;
+  static const int databaseVersion = 5;
 
   // Table Names
   static const String categoriesTable = "categories";
@@ -32,6 +32,7 @@ class DBConstants {
   static const String groupDescription = "description";
   static const String groupIconName = "icon_name";
   static const String groupColorValue = "color_value";
+  static const String groupImagePath = "image_path";
 
   // Group Members Columns
   static const String memberGroupId = "group_id";

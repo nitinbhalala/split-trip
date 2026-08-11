@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:split_trip/core/common/button/app_elevated_button.dart';
 import 'package:split_trip/core/common/widgets/app_alert_dialog.dart';
 import 'package:split_trip/core/common/widgets/common_app_bar.dart';
 import 'package:split_trip/core/common/widgets/custom_text_field.dart';
@@ -10,14 +11,14 @@ import 'package:split_trip/modules/Group/screen/widgets/create_group_bottom_shee
 import 'package:split_trip/modules/Group/screen/widgets/group_empty_state.dart';
 import 'package:split_trip/modules/Group/screen/widgets/group_list_item.dart';
 
-class GroupScreen extends StatefulWidget {
-  const GroupScreen({super.key});
+class DashbordScreen extends StatefulWidget {
+  const DashbordScreen({super.key});
 
   @override
-  State<GroupScreen> createState() => _GroupScreenState();
+  State<DashbordScreen> createState() => _DashbordScreenState();
 }
 
-class _GroupScreenState extends State<GroupScreen> {
+class _DashbordScreenState extends State<DashbordScreen> {
   late final GroupController _groupController;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
@@ -37,6 +38,7 @@ class _GroupScreenState extends State<GroupScreen> {
   }
 
   void _showCreateGroupDialog() {
+    FocusScope.of(context).unfocus();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -47,13 +49,18 @@ class _GroupScreenState extends State<GroupScreen> {
       builder: (context) {
         return CreateGroupBottomSheet(groupController: _groupController);
       },
-    );
+    ).then((_) {
+      if (mounted) {
+        FocusScope.of(context).unfocus();
+      }
+    });
   }
 
   void _confirmDeleteGroup(int groupId, String groupName) {
     AppAlertDialog.show(
       titleText: "Delete Group", //dharmik snackbar sho
       contentText: "Are you sure you want to delete '$groupName'?",
+      actionsAlignment: MainAxisAlignment.spaceBetween,
       actions: [
         TextButton(
           onPressed: () => Get.back(),
@@ -86,76 +93,97 @@ class _GroupScreenState extends State<GroupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CommonAppBar(title: "Groups", showBackButton: false),
-      body: Padding(
-        padding: AppSize.symmetric(horizontal: 14, vertical: 10),
-        child: Column(
-          children: [
-            // Search Bar
-            CustomTextField(
-              title: "",
-              controller: _searchController,
-              hint: "Search groups...",
-              prefixIcon: const Icon(Icons.search_rounded),
-              onChanged: (val) {
-                setState(() {
-                  _searchQuery = val;
-                });
-              },
-            ),
-            AppSize.gapH(14),
+      appBar: const CommonAppBar(title: "Dashbord", showBackButton: false),
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Padding(
+          padding: AppSize.symmetric(horizontal: 14, vertical: 10),
+          child: Column(
+            children: [
+              // Search Bar
+              CustomTextField(
+                title: "",
+                controller: _searchController,
+                hint: "Search groups...",
+                prefixIcon: const Icon(Icons.search_rounded),
+                onChanged: (val) {
+                  setState(() {
+                    _searchQuery = val;
+                  });
+                },
+              ),
+              AppSize.gapH(14),
 
-            // Dynamic Group List from SQLite Database
-            Expanded(
-              child: Obx(() {
-                if (_groupController.isLoading.value &&
-                    _groupController.groups.isEmpty) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+              // Dynamic Group List from SQLite Database
+              Expanded(
+                child: Obx(() {
+                  if (_groupController.isLoading.value &&
+                      _groupController.groups.isEmpty) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                final filteredGroups = _groupController.groups
-                    .where(
-                      (g) => g.name.toLowerCase().contains(
-                        _searchQuery.toLowerCase(),
-                      ),
-                    )
-                    .toList();
+                  final filteredGroups = _groupController.groups
+                      .where(
+                        (g) => g.name.toLowerCase().contains(
+                          _searchQuery.toLowerCase(),
+                        ),
+                      )
+                      .toList();
 
-                if (filteredGroups.isEmpty) {
-                  return GroupEmptyState(searchQuery: _searchQuery);
-                }
+                  if (filteredGroups.isEmpty) {
+                    return GroupEmptyState(searchQuery: _searchQuery);
+                  }
 
-                return ListView.separated(
-                  physics: const BouncingScrollPhysics(),
-                  padding: AppSize.only(bottom: 80),
-                  itemCount: filteredGroups.length,
-                  separatorBuilder: (_, _) => AppSize.gapH(10),
-                  itemBuilder: (context, index) {
-                    final item = filteredGroups[index];
-                    final pendingExp =
-                        _groupController.groupPendingExpenses[item.id] ?? 0.0;
-                    return GroupListItem(
-                      item: item,
-                      totalExpense: pendingExp,
-                      onDeleteConfirm: _confirmDeleteGroup,
-                    );
-                  },
-                );
-              }),
-            ),
-          ],
+                  return ListView.separated(
+                    physics: const BouncingScrollPhysics(),
+                    padding: AppSize.only(bottom: 80),
+                    itemCount: filteredGroups.length,
+                    separatorBuilder: (_, _) => AppSize.gapH(10),
+                    itemBuilder: (context, index) {
+                      final item = filteredGroups[index];
+                      final pendingExp =
+                          _groupController.groupPendingExpenses[item.id] ?? 0.0;
+                      return GroupListItem(
+                        item: item,
+                        totalExpense: pendingExp,
+                        onDeleteConfirm: _confirmDeleteGroup,
+                      );
+                    },
+                  );
+                }),
+              ),
+            ],
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showCreateGroupDialog,
-        backgroundColor: AppColors.primaryDark,
-        foregroundColor: AppColors.white,
+      // floatingActionButton: FloatingActionButton.extended(
+      //   onPressed: _showCreateGroupDialog,
+      //   backgroundColor: AppColors.primaryDark,
+      //   foregroundColor: AppColors.white,
+      //   isExtended: true,
+      //   extendedIconLabelSpacing: 4,
+
+      //   elevation: 4,
+      //   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      //   icon: Icon(Icons.group_add_rounded, size: AppSize.sp(20)),
+      //   extendedPadding: AppSize.symmetric(horizontal: 10, vertical: 0),
+      //   label: Text(
+      //     "Create Group",
+      //     style: Theme.of(context).textTheme.titleSmall,
+      //   ),
+      // ),
+      floatingActionButton: AppElevatedButton(
+        onPressed: () {
+          FocusScope.of(context).unfocus();
+          _showCreateGroupDialog();
+        },
+        color: AppColors.primaryDark,
+        width: AppSize.w(150),
+        height: AppSize.h(44),
         elevation: 4,
-        icon: const Icon(Icons.group_add_rounded),
-        label: const Text(
-          "Create Group",
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
+        borderRadius: 6,
+        icon: Icons.group_add_rounded,
+        title: "Create Group",
       ),
     );
   }

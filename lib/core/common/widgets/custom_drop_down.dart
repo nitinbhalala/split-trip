@@ -8,6 +8,7 @@ class DropdownItem<T> {
   final String? subtitle;
   final IconData? icon;
   final Color? iconColor;
+  final Widget? leading;
 
   const DropdownItem({
     required this.value,
@@ -15,11 +16,12 @@ class DropdownItem<T> {
     this.subtitle,
     this.icon,
     this.iconColor,
+    this.leading,
   });
 }
 
 class CustomDropdown<T> extends StatefulWidget {
-  final String title;
+  final String? title;
   final List<DropdownItem<T>> items;
   final T? selectedValue;
   final ValueChanged<T?>? onChanged;
@@ -30,7 +32,7 @@ class CustomDropdown<T> extends StatefulWidget {
 
   const CustomDropdown({
     super.key,
-    required this.title,
+    this.title,
     required this.items,
     this.selectedValue,
     this.onChanged,
@@ -81,16 +83,18 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Title Label
-        Text(
-          widget.title,
-          style: TextStyle(
-            fontWeight: FontWeight.w500,
-            fontSize: AppSize.sp(14),
-            color: Theme.of(context).colorScheme.onSurface,
+        // Title Label (if provided)
+        if (widget.title != null && widget.title!.isNotEmpty) ...[
+          Text(
+            widget.title!,
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: AppSize.sp(14),
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
-        ),
-        AppSize.gapH(8),
+          AppSize.gapH(8),
+        ],
 
         // Dropdown Trigger Button
         GestureDetector(
@@ -122,7 +126,10 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
             ),
             child: Row(
               children: [
-                if (displayItem?.icon != null) ...[
+                if (displayItem?.leading != null) ...[
+                  displayItem!.leading!,
+                  AppSize.gapW(12),
+                ] else if (displayItem?.icon != null) ...[
                   Icon(
                     displayItem!.icon,
                     size: 20,
@@ -207,7 +214,10 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
                       padding: AppSize.symmetric(horizontal: 12, vertical: 5),
                       child: Row(
                         children: [
-                          if (item.icon != null) ...[
+                          if (item.leading != null) ...[
+                            item.leading!,
+                            AppSize.gapW(12),
+                          ] else if (item.icon != null) ...[
                             Icon(
                               item.icon,
                               size: 20,

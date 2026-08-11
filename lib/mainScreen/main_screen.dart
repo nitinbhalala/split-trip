@@ -1,12 +1,9 @@
-import 'package:split_trip/core/sizer/app_size.dart';
 import 'package:split_trip/core/theme/app_color.dart';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:split_trip/mainScreen/main_controller.dart';
-import 'package:split_trip/modules/Activity/screen/activity_screen.dart';
 import 'package:split_trip/modules/Group/screen/group_screen.dart';
-import 'package:split_trip/modules/Home/screen/dashbord_screen.dart';
 import 'package:split_trip/modules/Report/screen/report_screen.dart';
 import 'package:split_trip/modules/Settings/screen/settings_screen.dart';
 
@@ -17,13 +14,7 @@ class MainScreen extends GetView<MainController> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final screens = [
-      DashbordScreen(),
-      ReportScreen(),
-      GroupScreen(),
-      ActivityScreen(),
-      SettingsScreen(),
-    ];
+    final screens = [DashbordScreen(), ReportScreen(), SettingsScreen()];
 
     return Obx(() {
       return Scaffold(
@@ -63,29 +54,15 @@ class MainScreen extends GetView<MainController> {
                   child: _BottomNavItem(
                     icon: Icons.pie_chart_rounded,
                     label: "Report",
-                    index: 3,
+                    index: 1,
                   ),
                 ),
 
                 Expanded(
                   child: _BottomNavItem(
-                    icon: Icons.group,
-                    label: "Group",
-                    index: 2,
-                  ),
-                ),
-                Expanded(
-                  child: _BottomNavItem(
-                    icon: Icons.watch_later,
-                    label: "Activity",
-                    index: 1,
-                  ),
-                ),
-                Expanded(
-                  child: _BottomNavItem(
                     icon: Icons.settings,
                     label: "Settings",
-                    index: 4,
+                    index: 2,
                   ),
                 ),
               ],
@@ -110,7 +87,6 @@ class _BottomNavItem extends GetView<MainController> {
 
   @override
   Widget build(BuildContext context) {
-    final groupscreen = index == 2;
     return Obx(() {
       final selected = controller.currentIndex.value == index;
 
@@ -125,43 +101,19 @@ class _BottomNavItem extends GetView<MainController> {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (groupscreen) ...[
-              Container(
-                width: AppSize.w(32),
-                height: AppSize.w(32),
-                margin: AppSize.only(bottom: 2),
-                decoration: BoxDecoration(
-                  color: selected ? AppColors.primaryDark : AppColors.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryDark.withValues(alpha: 0.25),
-                      blurRadius: 5,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.add,
-                  color: Colors.white,
-                  size: AppSize.sp(23),
-                ),
+            AnimatedScale(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+              scale: selected ? 1.12 : 1,
+              child: Icon(
+                icon,
+                size: selected ? 23 : 22,
+                color: selected
+                    ? AppColors.primaryDark
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
-              AppSize.gapH(2),
-            ] else ...[
-              AnimatedScale(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOut,
-                scale: selected ? 1.12 : 1,
-                child: Icon(
-                  icon,
-                  size: selected ? 23 : 22,
-                  color: selected
-                      ? AppColors.primaryDark
-                      : Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
+            ),
+
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 250),
               style: TextStyle(

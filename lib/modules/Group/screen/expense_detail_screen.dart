@@ -41,8 +41,8 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
       contentText:
           "Your friends will not be able to make any additional payments.",
       actions: [
-        InkWell(
-          onTap: () => Get.back(),
+        TextButton(
+          onPressed: () => Get.back(),
           child: Text(
             "Cancel",
             style: Theme.of(context).textTheme.labelLarge!.copyWith(
@@ -50,8 +50,8 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
             ),
           ),
         ),
-        InkWell(
-          onTap: () async {
+        TextButton(
+          onPressed: () async {
             Get.back();
             meta = ExpenseMetadataModel(
               title: meta.title,
@@ -248,7 +248,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
               ],
               AppSize.gapH(10),
               AppDivider(thickness: 1.2),
-              AppSize.gapH(10),
+              AppSize.gapH(1),
 
               // Status line: "3 of 4 paid" & "Send reminder" button
               Row(
@@ -268,8 +268,8 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                       color: theme.colorScheme.error,
                     ),
                     AppSize.gapW(3),
-                    InkWell(
-                      onTap: () => _confirmCloseRequest(context),
+                    TextButton(
+                      onPressed: () => _confirmCloseRequest(context),
                       child: Text(
                         "Close request",
                         style: theme.textTheme.labelLarge?.copyWith(
@@ -280,7 +280,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                   ],
                 ],
               ),
-              AppSize.gapH(12),
+              AppSize.gapH(1),
 
               // Member Split List
               Expanded(

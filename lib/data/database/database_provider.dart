@@ -50,6 +50,7 @@ class DatabaseProvider {
             ${DBConstants.groupDescription} TEXT,
             ${DBConstants.groupIconName} TEXT DEFAULT 'group_work',
             ${DBConstants.groupColorValue} INTEGER DEFAULT 4282081782,
+            ${DBConstants.groupImagePath} TEXT DEFAULT '',
             ${DBConstants.createdAt} TEXT,
             ${DBConstants.updatedAt} TEXT
           )
@@ -122,6 +123,13 @@ class DatabaseProvider {
               );
             } catch (_) {}
           }
+        }
+        if (oldVersion < 5) {
+          try {
+            await db.execute(
+              'ALTER TABLE ${DBConstants.groupsTable} ADD COLUMN ${DBConstants.groupImagePath} TEXT DEFAULT "";',
+            );
+          } catch (_) {}
         }
       },
     );

@@ -86,6 +86,7 @@ class GroupController extends GetxController {
     String description, {
     String iconName = "group_work",
     int colorValue = 0xFF3B82F6,
+    String imagePath = "",
   }) async {
     if (name.trim().isEmpty) return false;
     isLoading.value = true;
@@ -97,6 +98,7 @@ class GroupController extends GetxController {
         description: description.trim(),
         iconName: iconName,
         colorValue: colorValue,
+        imagePath: imagePath,
         createdAt: now,
         updatedAt: now,
       );

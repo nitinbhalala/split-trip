@@ -1,7 +1,6 @@
 import 'package:share_plus/share_plus.dart';
 import 'package:split_trip/core/common/widgets/app_logger.dart';
 import 'package:split_trip/core/common/widgets/app_snackbar.dart';
-import 'package:split_trip/modules/Settings/controller/currency_controller.dart';
 
 /// A centralized service for all share operations.
 ///

@@ -1,4 +1,3 @@
-
 import 'package:get/get.dart';
 import 'package:split_trip/core/Binding/app_initial_binding.dart';
 import 'package:split_trip/core/router/app_pages.dart';
@@ -11,6 +10,15 @@ import 'package:split_trip/modules/Settings/screen/theme_selection_screen.dart';
 import 'package:split_trip/modules/Onboarding/screen/onboarding_screen.dart';
 import 'package:split_trip/modules/Splash/splash_screen.dart';
 import 'package:split_trip/modules/auth/login_screen.dart';
+
+import 'package:split_trip/data/model/group_model.dart';
+import 'package:split_trip/data/model/group_message_model.dart';
+import 'package:split_trip/data/model/expense_metadata_model.dart';
+import 'package:split_trip/modules/Group/controller/group_detail_controller.dart';
+import 'package:split_trip/modules/Group/screen/group_detail_screen.dart';
+import 'package:split_trip/modules/Group/screen/group_info_screen.dart';
+import 'package:split_trip/modules/Group/screen/add_split_expense_screen.dart';
+import 'package:split_trip/modules/Group/screen/expense_detail_screen.dart';
 
 class AppPages {
   AppPages._();
@@ -38,11 +46,57 @@ class AppPages {
     ),
     GetPage(name: AppRoutes.profile, page: () => const ProfileScreen()),
 
-   
     GetPage(
       name: AppRoutes.selectCategory,
       page: () => const CategorySelectionScreen(),
     ),
-  
+    GetPage(
+      name: AppRoutes.groupDetail,
+      page: () {
+        final group = Get.arguments as GroupModel;
+        return GroupDetailScreen(group: group);
+      },
+    ),
+    GetPage(
+      name: AppRoutes.groupInfo,
+      page: () {
+        final args = Get.arguments;
+        if (args is Map<String, dynamic>) {
+          return GroupInfoScreen(
+            group: args['group'] as GroupModel,
+            controller: args['controller'] as GroupDetailController,
+          );
+        }
+        final group = args as GroupModel;
+        final controller = Get.isRegistered<GroupDetailController>()
+            ? Get.find<GroupDetailController>()
+            : Get.put(GroupDetailController(groupId: group.id ?? 0));
+        return GroupInfoScreen(group: group, controller: controller);
+      },
+    ),
+    GetPage(
+      name: AppRoutes.addSplitExpense,
+      page: () {
+        final args = Get.arguments as Map<String, dynamic>;
+        return AddSplitExpenseScreen(
+          controller: args['controller'] as GroupDetailController,
+          groupName: args['groupName'] as String,
+          editingMessage: args['editingMessage'] as GroupMessageModel?,
+          initialMeta: args['initialMeta'] as ExpenseMetadataModel?,
+        );
+      },
+    ),
+    GetPage(
+      name: AppRoutes.expenseDetail,
+      page: () {
+        final args = Get.arguments as Map<String, dynamic>;
+        return ExpenseDetailScreen(
+          controller: args['controller'] as GroupDetailController,
+          msg: args['msg'] as GroupMessageModel,
+          initialMeta:
+              (args['initialMeta'] ?? args['meta']) as ExpenseMetadataModel,
+        );
+      },
+    ),
   ];
 }

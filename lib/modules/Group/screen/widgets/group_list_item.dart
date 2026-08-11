@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:split_trip/core/common/helper/app_helper.dart';
 import 'package:split_trip/core/common/icons/app_icons.dart';
+import 'package:split_trip/core/router/app_pages.dart';
 import 'package:split_trip/data/model/group_model.dart';
-import 'package:split_trip/modules/Group/screen/group_detail_screen.dart';
-import 'package:split_trip/modules/Home/screen/widgets/trip_card_widget.dart';
+import 'package:split_trip/modules/Group/screen/widgets/trip_card_widget.dart';
 import 'package:split_trip/modules/Settings/controller/currency_controller.dart';
 
 class GroupListItem extends StatelessWidget {
@@ -57,14 +57,12 @@ class GroupListItem extends StatelessWidget {
           // statusText: "Active",
           icon: groupIcon,
           gradient: gradient,
+          imagePath: item.imagePath,
           // isOwe: false,
           onTap: () {
-            Get.to(
-              () => GroupDetailScreen(
-                group: item,
-                gradient: gradient,
-                icon: groupIcon,
-              ),
+            Get.toNamed(
+              AppRoutes.groupDetail,
+              arguments: item,
             );
           },
         );

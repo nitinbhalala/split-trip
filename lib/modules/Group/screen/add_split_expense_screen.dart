@@ -4,6 +4,8 @@ import 'package:split_trip/core/common/button/app_elevated_button.dart';
 import 'package:split_trip/core/common/helper/app_helper.dart';
 import 'package:split_trip/core/common/widgets/custom_text_field.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
+import 'package:split_trip/data/model/expense_metadata_model.dart';
+import 'package:split_trip/data/model/group_message_model.dart';
 import 'package:split_trip/modules/Group/controller/add_split_expense_controller.dart';
 import 'package:split_trip/modules/Group/controller/group_detail_controller.dart';
 import 'package:split_trip/modules/Group/screen/widgets/add_split_expense_widgets.dart';
@@ -11,11 +13,15 @@ import 'package:split_trip/modules/Group/screen/widgets/add_split_expense_widget
 class AddSplitExpenseScreen extends StatefulWidget {
   final GroupDetailController controller;
   final String groupName;
+  final GroupMessageModel? editingMessage;
+  final ExpenseMetadataModel? initialMeta;
 
   const AddSplitExpenseScreen({
     super.key,
     required this.controller,
     required this.groupName,
+    this.editingMessage,
+    this.initialMeta,
   });
 
   @override
@@ -30,7 +36,11 @@ class _AddSplitExpenseScreenState extends State<AddSplitExpenseScreen> {
   void initState() {
     super.initState();
     splitController = Get.put(
-      AddSplitExpenseController(groupDetailController: widget.controller),
+      AddSplitExpenseController(
+        groupDetailController: widget.controller,
+        editingMessage: widget.editingMessage,
+        initialMeta: widget.initialMeta,
+      ),
     );
   }
 
@@ -79,17 +89,21 @@ class _AddSplitExpenseScreenState extends State<AddSplitExpenseScreen> {
           },
         ),
       ),
-      body: SafeArea(
-        bottom: true,
-        child: Obx(() {
-          if (splitController.step.value == 1) {
-            return _buildAmountInputStep(theme);
-          } else if (splitController.step.value == 2) {
-            return _buildPayerSelectionStep(theme);
-          } else {
-            return _buildSplitAllocationStep(theme, isKeyboardOpen);
-          }
-        }),
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.opaque,
+        child: SafeArea(
+          bottom: true,
+          child: Obx(() {
+            if (splitController.step.value == 1) {
+              return _buildAmountInputStep(theme);
+            } else if (splitController.step.value == 2) {
+              return _buildPayerSelectionStep(theme);
+            } else {
+              return _buildSplitAllocationStep(theme, isKeyboardOpen);
+            }
+          }),
+        ),
       ),
     );
   }
@@ -496,7 +510,11 @@ class _AddSplitExpenseScreenState extends State<AddSplitExpenseScreen> {
             final isEnable = isKeyboardOpen || splitController.isValid;
             return Center(
               child: AppElevatedButton(
-                title: isKeyboardOpen ? "Done" : "Send request",
+                title: isKeyboardOpen
+                    ? "Done"
+                    : (splitController.isEditMode
+                        ? "Update request"
+                        : "Send request"),
                 isEnabled: isEnable,
                 width: isKeyboardOpen ? AppSize.w(310) : double.infinity,
                 height: isKeyboardOpen ? AppSize.h(33) : null,

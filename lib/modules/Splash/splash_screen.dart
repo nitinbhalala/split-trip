@@ -20,6 +20,7 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
+  late Animation<double> _subtitleFadeAnimation;
   late Animation<Offset> _titleSlideAnimation;
   late Animation<Offset> _subtitleSlideAnimation;
 
@@ -30,7 +31,7 @@ class _SplashScreenState extends State<SplashScreen>
     // 1. FIRST create controller
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
+      duration: const Duration(milliseconds: 1500),
     );
 
     // 2. Then create animations
@@ -39,13 +40,18 @@ class _SplashScreenState extends State<SplashScreen>
       end: 1,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
-    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(_controller);
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeIn),
+      ),
+    );
 
     _titleSlideAnimation =
         Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero).animate(
           CurvedAnimation(
             parent: _controller,
-            curve: const Interval(0.35, 0.8, curve: Curves.easeOut),
+            curve: const Interval(0.25, 0.60, curve: Curves.easeOutCubic),
           ),
         );
 
@@ -53,9 +59,16 @@ class _SplashScreenState extends State<SplashScreen>
         Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero).animate(
           CurvedAnimation(
             parent: _controller,
-            curve: const Interval(0.55, 1.0, curve: Curves.easeOut),
+            curve: const Interval(0.65, 1.0, curve: Curves.easeOutCubic),
           ),
         );
+
+    _subtitleFadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.65, 1.0, curve: Curves.easeIn),
+      ),
+    );
 
     _controller.forward();
 
@@ -126,32 +139,27 @@ class _SplashScreenState extends State<SplashScreen>
               opacity: _fadeAnimation,
               child: ScaleTransition(
                 scale: _scaleAnimation,
-                child: Container(
-                  width: AppSize.sp(120),
-                  height: AppSize.sp(120),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1D314B),
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.all(10), // Increase/Decrease as needed
-                    child: Image.asset(AppAssets.applogo, fit: BoxFit.contain),
-                  ),
-                ),
+                child: Image.asset(AppAssets.applogo, scale: 9),
               ),
             ),
-
-            AppSize.gapH(10),
             SlideTransition(
               position: _titleSlideAnimation,
               child: FadeTransition(
                 opacity: _fadeAnimation,
-                child: const Text(
-                  "Split Trip",
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: .5,
+                child: ShaderMask(
+                  blendMode: BlendMode.srcIn,
+                  shaderCallback: (bounds) => const LinearGradient(
+                    colors: [AppColors.primary, AppColors.secondary],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ).createShader(bounds),
+                  child: const Text(
+                    "Split Trip",
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: .5,
+                    ),
                   ),
                 ),
               ),
@@ -161,10 +169,12 @@ class _SplashScreenState extends State<SplashScreen>
             SlideTransition(
               position: _subtitleSlideAnimation,
               child: FadeTransition(
-                opacity: _fadeAnimation,
+                opacity: _subtitleFadeAnimation,
                 child: Text(
-                  "Track • Save • Grow",
-                  style: TextStyle(color: AppColors.subtitle, fontSize: 16),
+                  "Plan Together • Split Easily",
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ),

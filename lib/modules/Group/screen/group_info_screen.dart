@@ -1,14 +1,14 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:split_trip/core/common/button/app_elevated_button.dart';
 import 'package:split_trip/core/common/widgets/app_alert_dialog.dart';
 import 'package:split_trip/core/common/widgets/app_snackbar.dart';
-import 'package:split_trip/core/common/widgets/custom_text_field.dart';
+import 'package:split_trip/core/common/widgets/common_app_bar.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
-import 'package:split_trip/core/common/icons/app_icons.dart';
 import 'package:split_trip/core/theme/app_color.dart';
 import 'package:split_trip/data/model/group_model.dart';
 import 'package:split_trip/modules/Group/controller/group_detail_controller.dart';
+import 'package:split_trip/modules/Group/screen/widgets/add_people_bottom_sheet.dart';
 import 'package:split_trip/modules/Group/screen/widgets/create_group_bottom_sheet.dart';
 
 class GroupInfoScreen extends StatefulWidget {
@@ -66,90 +66,7 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
   }
 
   void _showAddPeopleDialog() {
-    final nameController = TextEditingController();
-    final phoneController = TextEditingController();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          bottom: true,
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 20,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                AppSize.gapH(16),
-                Text(
-                  "Add people to ${widget.controller.groupName.value}",
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                AppSize.gapH(16),
-
-                CustomTextField(
-                  title: "",
-                  controller: nameController,
-                  hint: "Member Name (e.g. john doe)",
-                  prefixIcon: Icon(Icons.person),
-                ),
-                AppSize.gapH(12),
-
-                CustomTextField(
-                  title: "",
-                  controller: phoneController,
-                  hint: "Phone / Contact (Optional)",
-                  prefixIcon: Icon(Icons.phone_rounded),
-                  keyBoardType: TextInputType.phone,
-                ),
-                AppSize.gapH(20),
-
-                AppElevatedButton(
-                  title: "Add Member",
-                  onPressed: () async {
-                    final name = nameController.text.trim();
-                    if (name.isNotEmpty) {
-                      Get.back();
-                      final success = await widget.controller.addMember(
-                        name: name,
-                        phone: phoneController.text.trim(),
-                      );
-                      if (success) {
-                        AppSnackbar.success(message: "$name added to group!");
-                      }
-                    } else {
-                      AppSnackbar.error(
-                        message: "Please enter a valid member name.",
-                      );
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+    AddPeopleBottomSheet.show(context, widget.controller);
   }
 
   void _confirmRemoveMember(int memberId, String memberName) {
@@ -160,8 +77,8 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
           "This member will be removed from the group and will no longer participate in future expense splits.",
       actionsAlignment: MainAxisAlignment.spaceBetween,
       actions: [
-        InkWell(
-          onTap: () => Get.back(),
+        TextButton(
+          onPressed: () => Get.back(),
           child: Text(
             "Cancel",
             style: Theme.of(context).textTheme.titleSmall!.copyWith(
@@ -170,8 +87,8 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
             ),
           ),
         ),
-        InkWell(
-          onTap: () async {
+        TextButton(
+          onPressed: () async {
             Get.back();
             final success = await widget.controller.deleteMember(memberId);
             if (success) {
@@ -196,13 +113,10 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: CommonAppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => Get.back(),
-        ),
+        title: "",
+        enableBottomBorder: false,
       ),
       body: SafeArea(
         bottom: true,
@@ -214,19 +128,38 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
             children: [
               Center(
                 child: Obx(() {
+                  final imgPath = widget.controller.imagePath.value.isNotEmpty
+                      ? widget.controller.imagePath.value
+                      : widget.group.imagePath;
+                  final hasImg =
+                      imgPath.isNotEmpty && File(imgPath).existsSync();
+
+                  if (hasImg) {
+                    return CircleAvatar(
+                      radius: AppSize.sp(34),
+                      backgroundImage: FileImage(File(imgPath)),
+                    );
+                  }
+
                   final colorVal = widget.controller.colorValue.value != 0
                       ? widget.controller.colorValue.value
                       : widget.group.colorValue;
-                  final iconStr = widget.controller.iconName.value.isNotEmpty
-                      ? widget.controller.iconName.value
-                      : widget.group.iconName;
+                  final groupName = widget.controller.groupName.value.isNotEmpty
+                      ? widget.controller.groupName.value
+                      : widget.group.name;
+                  final firstChar = groupName.trim().isNotEmpty
+                      ? groupName.trim()[0].toUpperCase()
+                      : "?";
+
                   return CircleAvatar(
-                    radius: AppSize.sp(30),
+                    radius: AppSize.sp(34),
                     backgroundColor: Color(colorVal),
-                    child: Icon(
-                      AppIcons.getIcon(iconStr),
-                      color: AppColors.white,
-                      size: AppSize.sp(30),
+                    child: Text(
+                      firstChar,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   );
                 }),

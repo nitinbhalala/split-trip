@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -71,7 +70,8 @@ class ImagePickerService {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       backgroundColor: theme.colorScheme.surface,
-      builder: (ctx) => _PickerSheet(theme: theme, showRemoveOption: showRemoveOption),
+      builder: (ctx) =>
+          _PickerSheet(theme: theme, showRemoveOption: showRemoveOption),
     );
 
     if (action == null) return null; // dismissed
@@ -80,96 +80,44 @@ class ImagePickerService {
       return const ImagePickResult(isRemoved: true);
     }
 
-    final source = action == _PickerAction.camera ? ImageSource.camera : ImageSource.gallery;
+    final source = action == _PickerAction.camera
+        ? ImageSource.camera
+        : ImageSource.gallery;
     return pick(source: source);
   }
 
   static Future<bool> _requestPermission(ImageSource source) async {
-    if (Platform.isIOS) {
-      Permission permission = source == ImageSource.camera ? Permission.camera : Permission.photos;
+    // Gallery selection uses System Photo Picker (No storage/media permissions needed)
+    if (source == ImageSource.gallery) {
+      return true;
+    }
 
-      final status = await permission.request();
-
+    // Camera selection requires Camera Permission
+    if (source == ImageSource.camera) {
+      final status = await Permission.camera.request();
       if (status.isGranted || status.isLimited) {
         return true;
       }
 
       if (status.isPermanentlyDenied) {
         await _showSettingsDialog(
-          title: source == ImageSource.camera ? "Camera Access" : "Photo Library Access",
+          title: 'Camera Access Required',
           message:
-              source == ImageSource.camera
-                  ? "Please allow camera access from Settings."
-                  : "Please allow photo library access from Settings.",
+              'Camera permission is required to take a photo. Please enable it in Settings.',
         );
       }
-
-      return false;
-    }
-
-    // Android: version-specific permissions
-    final permissions = await _requiredPermissions(source);
-    final statuses = await permissions.request();
-
-    bool allGranted = true;
-    bool anyPermanentlyDenied = false;
-
-    for (final perm in permissions) {
-      final s = statuses[perm];
-      if (s == null || s.isDenied) {
-        allGranted = false;
-      }
-      if (s?.isPermanentlyDenied == true) {
-        anyPermanentlyDenied = true;
-      }
-    }
-
-    if (anyPermanentlyDenied) {
-      await _showSettingsDialog(
-        title: source == ImageSource.camera ? 'Camera Access Required' : 'Gallery Access Required',
-        message:
-            source == ImageSource.camera
-                ? 'Camera permission is required to take a photo. Please enable it in Settings.'
-                : 'Storage/media permission is required to pick a photo from gallery. Please enable it in Settings.',
-      );
-      return false;
-    }
-
-    if (!allGranted) {
       return false;
     }
 
     return true;
   }
 
-  /// Returns the set of [Permission]s needed based on Android version and source.
-  static Future<List<Permission>> _requiredPermissions(ImageSource source) async {
-    if (Platform.isIOS) return [Permission.photos];
-
-    final perms = <Permission>[];
-
-    if (source == ImageSource.camera) {
-      perms.add(Permission.camera);
-    } else {
-      if (Platform.isAndroid) {
-        final androidInfo = await DeviceInfoPlugin().androidInfo;
-        final sdkInt = androidInfo.version.sdkInt;
-        if (sdkInt >= 33) {
-          perms.add(Permission.photos);
-        } else {
-          perms.add(Permission.storage);
-        }
-      } else {
-        perms.add(Permission.photos);
-      }
-    }
-
-    return perms;
-  }
-
   // ── Settings redirect dialog ───────────────────────────────────────────────
 
-  static Future<void> _showSettingsDialog({required String title, required String message}) async {
+  static Future<void> _showSettingsDialog({
+    required String title,
+    required String message,
+  }) async {
     await AppAlertDialog.show<void>(
       titleText: title,
       contentText: message,
@@ -219,7 +167,9 @@ class _PickerSheet extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8, left: 16, right: 16),
               child: Text(
                 'Profile Photo',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
 
@@ -234,15 +184,23 @@ class _PickerSheet extends StatelessWidget {
                   color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.camera_alt_rounded, color: theme.colorScheme.primary, size: 20),
+                child: Icon(
+                  Icons.camera_alt_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
               ),
               title: Text(
                 'Take photo',
-                style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               subtitle: Text(
                 'Open camera to take a new photo',
-                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
               onTap: () => Navigator.pop(context, _PickerAction.camera),
             ),
@@ -256,15 +214,23 @@ class _PickerSheet extends StatelessWidget {
                   color: theme.colorScheme.secondary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.photo_library_rounded, color: theme.colorScheme.secondary, size: 20),
+                child: Icon(
+                  Icons.photo_library_rounded,
+                  color: theme.colorScheme.secondary,
+                  size: 20,
+                ),
               ),
               title: Text(
                 'Choose from gallery',
-                style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               subtitle: Text(
                 'Pick an existing photo from your device',
-                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
               onTap: () => Navigator.pop(context, _PickerAction.gallery),
             ),
@@ -280,15 +246,24 @@ class _PickerSheet extends StatelessWidget {
                     color: Colors.red.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.delete_rounded, color: Colors.red, size: 20),
+                  child: const Icon(
+                    Icons.delete_rounded,
+                    color: Colors.red,
+                    size: 20,
+                  ),
                 ),
                 title: Text(
                   'Remove photo',
-                  style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500, color: Colors.red),
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.red,
+                  ),
                 ),
                 subtitle: Text(
                   'Delete current profile photo',
-                  style: theme.textTheme.bodySmall?.copyWith(color: Colors.red.withValues(alpha: 0.7)),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.red.withValues(alpha: 0.7),
+                  ),
                 ),
                 onTap: () => Navigator.pop(context, _PickerAction.remove),
               ),

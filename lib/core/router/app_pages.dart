@@ -10,4 +10,8 @@ class AppRoutes {
   static const selectTheme = '/select-theme';
   static const profile = '/profile';
   static const selectCategory = '/select-category';
+  static const groupDetail = '/group-detail';
+  static const groupInfo = '/group-info';
+  static const addSplitExpense = '/add-split-expense';
+  static const expenseDetail = '/expense-detail';
 }

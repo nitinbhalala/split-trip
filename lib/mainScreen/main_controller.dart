@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:split_trip/core/common/widgets/app_logger.dart';
 import 'package:split_trip/core/common/widgets/app_snackbar.dart';
+import 'package:split_trip/modules/Report/controller/report_controller.dart';
 
 class MainController extends GetxController {
   RxInt currentIndex = 0.obs;
@@ -47,22 +48,8 @@ class MainController extends GetxController {
 
   void changeTab(int index) {
     currentIndex.value = index;
-  }
-
-  String getTitle(int index) {
-    switch (index) {
-      case 0:
-        return "Home";
-      case 1:
-        return "Entry";
-      case 2:
-        return "Report";
-      case 3:
-        return "Budget";
-      case 4:
-        return "Settings";
-      default:
-        return "";
+    if (index == 1 && Get.isRegistered<ReportController>()) {
+      Get.find<ReportController>().loadGroups();
     }
   }
 }

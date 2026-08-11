@@ -1,14 +1,14 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:split_trip/core/common/button/app_elevated_button.dart';
-import 'package:split_trip/core/common/icons/app_icons.dart';
-import 'package:split_trip/core/common/widgets/app_icon_picker.dart';
 import 'package:split_trip/core/common/widgets/app_snackbar.dart';
 import 'package:split_trip/core/common/widgets/custom_text_field.dart';
 import 'package:split_trip/core/const/app_data.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
 import 'package:split_trip/core/theme/app_color.dart';
 import 'package:split_trip/data/model/group_model.dart';
+import 'package:split_trip/data/service/image_picker_service.dart';
 import 'package:split_trip/modules/Group/controller/group_controller.dart';
 import 'package:split_trip/modules/Group/controller/group_detail_controller.dart';
 
@@ -34,7 +34,7 @@ class _CreateGroupBottomSheetState extends State<CreateGroupBottomSheet> {
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
   String _selectedIconName = "group_work";
-  Color _selectedColor = const Color(0xFF3B82F6);
+  String _imagePath = "";
 
   final List<Color> _allColors = [
     ...AppData.row1Colors,
@@ -51,7 +51,7 @@ class _CreateGroupBottomSheetState extends State<CreateGroupBottomSheet> {
       _nameController.text = widget.initialGroup!.name;
       _descController.text = widget.initialGroup!.description;
       _selectedIconName = widget.initialGroup!.iconName;
-      _selectedColor = Color(widget.initialGroup!.colorValue);
+      _imagePath = widget.initialGroup!.imagePath;
     }
   }
 
@@ -62,7 +62,32 @@ class _CreateGroupBottomSheetState extends State<CreateGroupBottomSheet> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final result = await ImagePickerService.showPickerSheet(
+      context,
+      showRemoveOption: _imagePath.isNotEmpty,
+    );
+    if (result == null) return;
+
+    if (result.isRemoved) {
+      setState(() {
+        _imagePath = "";
+      });
+    } else if (result.file != null) {
+      setState(() {
+        _imagePath = result.file!.path;
+      });
+    }
+  }
+
+  Color _getAvatarColor(String name) {
+    if (name.trim().isEmpty) return const Color(0xFF3B82F6);
+    final index = name.trim().codeUnits.fold(0, (sum, char) => sum + char);
+    return _allColors[index.abs() % _allColors.length];
+  }
+
   Future<void> _handleSave() async {
+    FocusScope.of(context).unfocus();
     final groupName = _nameController.text.trim();
     if (groupName.isEmpty) {
       AppSnackbar.error(message: "Please enter a valid group name.");
@@ -71,10 +96,13 @@ class _CreateGroupBottomSheetState extends State<CreateGroupBottomSheet> {
 
     Get.back();
 
+    final avatarColor = _getAvatarColor(groupName);
+
     if (isEditMode) {
       final desc = _descController.text.trim();
       final iconName = _selectedIconName;
-      final colorVal = _selectedColor.toARGB32();
+      final colorVal = avatarColor.toARGB32();
+      final imgPath = _imagePath;
       bool success = false;
 
       if (widget.groupDetailController != null) {
@@ -83,10 +111,10 @@ class _CreateGroupBottomSheetState extends State<CreateGroupBottomSheet> {
           description: desc,
           iconName: iconName,
           colorValue: colorVal,
+          imagePath: imgPath,
         );
       } else if (widget.groupController != null &&
           widget.initialGroup!.id != null) {
-        // Fallback update via controller
         final controller =
             widget.groupDetailController ??
             GroupDetailController(groupId: widget.initialGroup!.id!);
@@ -95,6 +123,7 @@ class _CreateGroupBottomSheetState extends State<CreateGroupBottomSheet> {
           description: desc,
           iconName: iconName,
           colorValue: colorVal,
+          imagePath: imgPath,
         );
       }
 
@@ -107,6 +136,7 @@ class _CreateGroupBottomSheetState extends State<CreateGroupBottomSheet> {
             description: desc,
             iconName: iconName,
             colorValue: colorVal,
+            imagePath: imgPath,
             createdAt: widget.initialGroup!.createdAt,
             updatedAt: DateTime.now().toIso8601String(),
           );
@@ -121,7 +151,8 @@ class _CreateGroupBottomSheetState extends State<CreateGroupBottomSheet> {
         groupName,
         _descController.text.trim(),
         iconName: _selectedIconName,
-        colorValue: _selectedColor.toARGB32(),
+        colorValue: avatarColor.toARGB32(),
+        imagePath: _imagePath,
       );
 
       if (success) {
@@ -137,6 +168,8 @@ class _CreateGroupBottomSheetState extends State<CreateGroupBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasImage = _imagePath.isNotEmpty && File(_imagePath).existsSync();
+    final avatarColor = _getAvatarColor(_nameController.text);
 
     return SafeArea(
       bottom: true,
@@ -166,59 +199,109 @@ class _CreateGroupBottomSheetState extends State<CreateGroupBottomSheet> {
                   ),
                 ),
               ),
-              AppSize.gapH(20),
+              AppSize.gapH(16),
 
               // Title
               Text(
                 isEditMode ? "Edit Group Details" : "Create New Group",
-                style: theme.textTheme.titleLarge!.copyWith(fontWeight: .w500),
+                style: theme.textTheme.titleLarge!.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              AppSize.gapH(20),
+              AppSize.gapH(16),
 
-              // Live Preview Card Header (Row Layout)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: AppSize.w(40),
-                    height: AppSize.w(40),
-                    decoration: BoxDecoration(
-                      color: _selectedColor,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: _selectedColor.withValues(alpha: 0.35),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
+              // Group Image / Avatar Upload Section
+              Center(
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: Stack(
                     alignment: Alignment.center,
-                    child: Icon(
-                      AppIcons.getIcon(_selectedIconName),
-                      color: AppColors.white,
-                      size: AppSize.sp(22),
-                    ),
-                  ),
-                  AppSize.gapW(14),
-                  Expanded(
-                    child: CustomTextField(
-                      isDense: true,
-                      title: "",
-                      titleStyle: const TextStyle(fontSize: 0),
-                      controller: _nameController,
-                      hint: "Group Name (e.g., Goa Trip)",
-                      textStyle: theme.textTheme.bodyMedium,
-                      hintTextStyle: theme.textTheme.bodySmall,
-                      borderRadius: 8,
-                      contentPadding: AppSize.symmetric(
-                        vertical: 8,
-                        horizontal: 4,
+                    children: [
+                      Container(
+                        width: AppSize.w(76),
+                        height: AppSize.w(76),
+                        decoration: BoxDecoration(
+                          color: avatarColor,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: avatarColor.withValues(alpha: 0.35),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        alignment: Alignment.center,
+                        child: hasImage
+                            ? ClipOval(
+                                child: Image.file(
+                                  File(_imagePath),
+                                  width: AppSize.w(76),
+                                  height: AppSize.w(76),
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : Text(
+                                _nameController.text.trim().isNotEmpty
+                                    ? _nameController.text
+                                          .trim()[0]
+                                          .toUpperCase()
+                                    : "?",
+                                style: theme.textTheme.headlineMedium?.copyWith(
+                                  color: AppColors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
-                      onChanged: (_) => setState(() {}),
-                    ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: AppSize.all(6),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: theme.colorScheme.surface,
+                              width: 2,
+                            ),
+                          ),
+                          child: Icon(
+                            hasImage
+                                ? Icons.edit_rounded
+                                : Icons.camera_alt_rounded,
+                            size: AppSize.sp(14),
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
+              ),
+              AppSize.gapH(6),
+              Center(
+                child: Text(
+                  hasImage ? "Tap to change photo" : "Tap to upload photo",
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              AppSize.gapH(16),
+
+              // Group Name Input
+              CustomTextField(
+                title: "Group Name",
+                textStyle: theme.textTheme.bodyMedium,
+                hintTextStyle: theme.textTheme.bodySmall,
+                titleStyle: theme.textTheme.labelSmall,
+                isDense: true,
+                controller: _nameController,
+                hint: "Enter group name (e.g., Goa Trip)",
+                borderRadius: 8,
+                contentPadding: AppSize.symmetric(vertical: 10, horizontal: 10),
+                onChanged: (_) => setState(() {}),
               ),
               AppSize.gapH(14),
 
@@ -232,85 +315,10 @@ class _CreateGroupBottomSheetState extends State<CreateGroupBottomSheet> {
                 controller: _descController,
                 hint: "Enter group description...",
                 borderRadius: 8,
-                contentPadding: AppSize.symmetric(vertical: 8, horizontal: 4),
+                contentPadding: AppSize.symmetric(vertical: 10, horizontal: 10),
                 onChanged: (_) => setState(() {}),
               ),
               AppSize.gapH(20),
-
-              // Color Selection Title
-              Text("Select Group Color", style: theme.textTheme.titleSmall),
-              AppSize.gapH(10),
-
-              // Color Picker Horizontal List
-              SizedBox(
-                height: AppSize.h(48),
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _allColors.length,
-                  separatorBuilder: (_, _) => AppSize.gapW(10),
-                  itemBuilder: (context, index) {
-                    final color = _allColors[index];
-                    final isSelected =
-                        color.toARGB32() == _selectedColor.toARGB32();
-
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedColor = color;
-                        });
-                      },
-                      child: Container(
-                        width: AppSize.w(38),
-                        height: AppSize.w(38),
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: isSelected
-                              ? Border.all(
-                                  color: theme.colorScheme.onSurface,
-                                  width: 1.5,
-                                )
-                              : null,
-                        ),
-                        child: isSelected
-                            ? Icon(
-                                Icons.check_rounded,
-                                color: Colors.white,
-                                size: AppSize.sp(18),
-                              )
-                            : null,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              AppSize.gapH(20),
-
-              // Icon Selection Title
-              Text("Select Group Icon", style: theme.textTheme.titleSmall),
-              AppSize.gapH(10),
-
-              // Categorized Icon Picker Box
-              Container(
-                height: AppSize.h(240),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest.withValues(
-                    alpha: 0.3,
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: theme.colorScheme.outlineVariant),
-                ),
-                child: AppIconPicker(
-                  selectedIconName: _selectedIconName,
-                  selectedColor: _selectedColor,
-                  onIconSelected: (iconName) {
-                    setState(() {
-                      _selectedIconName = iconName;
-                    });
-                  },
-                ),
-              ),
-              AppSize.gapH(24),
 
               // Save / Create Button
               AppElevatedButton(

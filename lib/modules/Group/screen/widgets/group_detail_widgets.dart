@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:split_trip/core/common/button/app_elevated_button.dart';
 import 'package:split_trip/core/common/divider/app_divider.dart';
 import 'package:split_trip/core/common/helper/app_helper.dart';
 import 'package:split_trip/core/common/widgets/app_alert_dialog.dart';
@@ -11,18 +12,21 @@ import 'package:split_trip/core/theme/app_color.dart';
 import 'package:split_trip/data/model/expense_metadata_model.dart';
 import 'package:split_trip/data/model/group_member_model.dart';
 import 'package:split_trip/data/model/group_message_model.dart';
+import 'package:split_trip/modules/Group/controller/group_detail_controller.dart';
 
 /// ── GPay Style Split Request Card Widget ────────────────────────────────────
 class GPaySplitCardWidget extends StatelessWidget {
   final GroupMessageModel msg;
   final List<GroupMemberModel> members;
   final VoidCallback onTap;
+  final VoidCallback? onEditTap;
 
   const GPaySplitCardWidget({
     super.key,
     required this.msg,
     required this.members,
     required this.onTap,
+    this.onEditTap,
   });
 
   @override
@@ -34,7 +38,7 @@ class GPaySplitCardWidget extends StatelessWidget {
     if (msg.createdAt != null) {
       try {
         final dt = DateTime.parse(msg.createdAt!);
-        formattedTime = DateFormat('hh:mm a').format(dt);
+        formattedTime = DateFormat('dd MMM').format(dt);
       } catch (_) {}
     }
 
@@ -51,12 +55,22 @@ class GPaySplitCardWidget extends StatelessWidget {
         .length;
     final bool isAllPaid = (paidCount == splitMemberCount);
 
-    final double perPerson = splitMemberCount > 0
-        ? (msg.amount / splitMemberCount)
-        : msg.amount;
+    // Can edit if split is active (not closed) AND no other member has paid yet
+    final bool canEdit =
+        !meta.isClosed &&
+        (meta.paidMemberNames.isEmpty ||
+            (meta.paidMemberNames.length == 1 &&
+                meta.paidMemberNames.contains(meta.paidByName)));
+
+        
+       
     final double progressValue = msg.amount > 0
         ? (totalPaidAmount / msg.amount).clamp(0.0, 1.0)
         : 0.0;
+    final double remainingAmount = (msg.amount - totalPaidAmount).clamp(
+      0.0,
+      msg.amount,
+    );
 
     return Align(
       alignment: Alignment.centerRight,
@@ -82,16 +96,37 @@ class GPaySplitCardWidget extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text("Split Request", style: theme.textTheme.labelMedium),
-                  Text(
-                    "Paid by ${meta.paidByName}",
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: meta.isClosed
-                          ? theme.colorScheme.onSurfaceVariant
-                          : theme.colorScheme.primary,
+                  InkWell(
+                    onTap: onEditTap,
+                    child: Row(
+                      crossAxisAlignment: .start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (canEdit && onEditTap != null) ...[
+                          AppSize.gapW(6),
+
+                          // onPressed: onEditTap,
+                          Icon(
+                            Icons.edit_square,
+                            size: AppSize.sp(13),
+                            color: theme.colorScheme.primary,
+                          ),
+                          AppSize.gapW(2),
+                          Text(
+                            "Edit Split ",
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: meta.isClosed
+                                  ? theme.colorScheme.onSurfaceVariant
+                                  : theme.colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ],
               ),
+
               if (meta.title != "")
                 Padding(
                   padding: AppSize.symmetric(vertical: 2),
@@ -102,27 +137,43 @@ class GPaySplitCardWidget extends StatelessWidget {
                     ),
                   ),
                 ),
-              Text(
-                AppHelper.formatCurrency(msg.amount),
-                style: theme.textTheme.bodyMedium!.copyWith(
-                  fontSize: AppSize.sp(22),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              if (!meta.isClosed) ...[
-                AppSize.gapH(1),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        "${AppHelper.formatCurrency(perPerson)} / person ($splitMemberCount members)",
-                        style: theme.textTheme.bodyMedium,
-                      ),
+
+              Row(
+                mainAxisAlignment: .spaceBetween,
+                children: [
+                  Text(
+                    AppHelper.formatCurrency(msg.amount),
+                    style: theme.textTheme.bodyMedium!.copyWith(
+                      fontSize: AppSize.sp(22),
+                      fontWeight: FontWeight.w500,
                     ),
-                  ],
-                ),
-                AppSize.gapH(6),
-              ],
+                  ),
+                  AppSize.gapW(5),
+                  Text(
+                    "Paid by ${meta.paidByName}",
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: meta.isClosed
+                          ? theme.colorScheme.onSurfaceVariant
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+              // if (!meta.isClosed) ...[
+              //   AppSize.gapH(1),
+              //   Row(
+              //     children: [
+              //       Expanded(
+              //         child: Text(
+              //           "${AppHelper.formatCurrency(perPerson)} / person ($splitMemberCount members)",
+              //           style: theme.textTheme.bodyMedium,
+              //         ),
+              //       ),
+              //     ],
+              //   ),
+              //   AppSize.gapH(6),
+              // ],
               if (meta.isClosed)
                 const SizedBox.shrink()
               else if (isAllPaid)
@@ -161,7 +212,7 @@ class GPaySplitCardWidget extends StatelessWidget {
                     ),
                     AppSize.gapW(8),
                     AppAutoSizeText(
-                      text: AppHelper.formatCurrency(perPerson),
+                      text: AppHelper.formatCurrency(remainingAmount),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: AppColors.primary,
@@ -182,7 +233,20 @@ class GPaySplitCardWidget extends StatelessWidget {
                         size: 14,
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
-                      AppSize.gapW(4),
+                      if (!meta.isClosed) ...[
+                        AppSize.gapW(2),
+                        Text(
+                          "$paidCount of $splitMemberCount paid • ",
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontWeight: meta.isClosed
+                                ? FontWeight.w500
+                                : FontWeight.normal,
+                          ),
+                        ),
+                        AppSize.gapW(2),
+                      ],
                       Text(
                         meta.isClosed
                             ? "No payment required"
@@ -336,8 +400,8 @@ class _OverallBalanceTileWidgetState extends State<OverallBalanceTileWidget> {
       contentText:
           "Are you sure you want to mark all pending split expenses for '${widget.name}' as paid?",
       actions: [
-        InkWell(
-          onTap: () => Get.back(),
+        TextButton(
+          onPressed: () => Get.back(),
           child: Text(
             "Cancel",
             style: Theme.of(context).textTheme.labelLarge!.copyWith(
@@ -345,8 +409,8 @@ class _OverallBalanceTileWidgetState extends State<OverallBalanceTileWidget> {
             ),
           ),
         ),
-        InkWell(
-          onTap: () {
+        TextButton(
+          onPressed: () {
             Get.back();
             setState(() {
               isExpanded = false;
@@ -441,34 +505,32 @@ class _OverallBalanceTileWidgetState extends State<OverallBalanceTileWidget> {
           if (isExpanded && isOwes) ...[
             AppDivider(thickness: 1.2),
             Padding(
-              padding: AppSize.symmetric(horizontal: 12, vertical: 8),
+              padding: AppSize.symmetric(horizontal: 12, vertical: 0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   // Right Action: Cancel
-                  InkWell(
+                  TextButton(
                     child: Text(
                       "Cancel",
                       style: theme.textTheme.labelMedium!.copyWith(
                         fontWeight: .w600,
                       ),
                     ),
-                    onTap: () {
+                    onPressed: () {
                       setState(() {
                         isExpanded = false;
                       });
                     },
                   ),
-                  Flexible(
-                    child: InkWell(
-                      child: Text(
-                        "Mark as paid",
-                        style: theme.textTheme.labelMedium!.copyWith(
-                          fontWeight: .w600,
-                          color: AppColors.success,
-                        ),
+                  TextButton(
+                    onPressed: () => _confirmMarkAsPaid(context),
+                    child: Text(
+                      "Mark as paid",
+                      style: theme.textTheme.labelMedium!.copyWith(
+                        fontWeight: .w600,
+                        color: AppColors.success,
                       ),
-                      onTap: () => _confirmMarkAsPaid(context),
                     ),
                   ),
                 ],
@@ -567,7 +629,14 @@ class PendingSettlementTileWidget extends StatelessWidget {
 
 /// ── Chat Empty State Widget ─────────────────────────────────────────────────
 class GroupChatEmptyStateWidget extends StatelessWidget {
-  const GroupChatEmptyStateWidget({super.key});
+  final GroupDetailController controller;
+  final VoidCallback? onAddMemberTap;
+
+  const GroupChatEmptyStateWidget({
+    super.key,
+    required this.controller,
+    this.onAddMemberTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -579,44 +648,57 @@ class GroupChatEmptyStateWidget extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           child: Container(
             constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            padding: AppSize.symmetric(horizontal: 0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  padding: AppSize.all(24),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer.withValues(
-                      alpha: 0.3,
+            padding: AppSize.symmetric(horizontal: 24),
+            child: Obx(() {
+              final bool isAlone = controller.members.length <= 1;
+              final groupName = controller.groupName.value;
+
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: AppSize.all(15),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer.withValues(
+                        alpha: 0.3,
+                      ),
+                      shape: BoxShape.circle,
                     ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.forum_outlined,
-                    size: 64,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-                AppSize.gapH(16),
-                Text(
-                  "No messages yet",
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                AppSize.gapH(6),
-                Text(
-                  "Tap '+' to split an expense with group members or start typing below.",
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant.withValues(
-                      alpha: 0.7,
+                    child: Icon(
+                      isAlone ? Icons.person_add_alt_1_rounded : Icons.message,
+                      size: AppSize.sp(40),
+                      color: theme.colorScheme.primary,
                     ),
                   ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
+                  AppSize.gapH(16),
+                  Text(
+                    isAlone
+                        ? "Add friends to your group"
+                        : "No expenses or messages yet",
+                    style: theme.textTheme.titleMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  AppSize.gapH(8),
+                  Text(
+                    isAlone
+                        ? "You're currently the only member in '$groupName'. Add members to start splitting trip expenses!"
+                        : "Tap '+' to split an expense with group members or start typing below.",
+                    style: theme.textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  if (onAddMemberTap != null) ...[
+                    AppSize.gapH(20),
+                    AppElevatedButton(
+                      width: AppSize.w(195),
+                      onPressed: onAddMemberTap,
+                      icon: Icons.person_add_rounded,
+                      title: isAlone ? "Add Members" : "Add More Members",
+                    ),
+                  ],
+                ],
+              );
+            }),
           ),
         );
       },

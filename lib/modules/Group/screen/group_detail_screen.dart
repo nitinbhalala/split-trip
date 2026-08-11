@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:split_trip/core/common/button/app_elevated_button.dart';
 import 'package:split_trip/core/common/loader/app_loader.dart';
+import 'package:split_trip/core/router/app_pages.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
 import 'package:split_trip/data/model/expense_metadata_model.dart';
 import 'package:split_trip/data/model/group_message_model.dart';
 import 'package:split_trip/data/model/group_model.dart';
 import 'package:split_trip/modules/Group/controller/group_detail_controller.dart';
-import 'package:split_trip/modules/Group/screen/add_split_expense_screen.dart';
-import 'package:split_trip/modules/Group/screen/expense_detail_screen.dart';
+import 'package:split_trip/modules/Group/screen/widgets/add_people_bottom_sheet.dart';
 import 'package:split_trip/modules/Group/screen/widgets/group_detail_app_bar.dart';
 import 'package:split_trip/modules/Group/screen/widgets/group_detail_widgets.dart';
 
@@ -32,16 +32,15 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
     with SingleTickerProviderStateMixin {
   late final GroupDetailController _controller;
   late final TabController _tabController;
-  final TextEditingController _msgInputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    _controller = Get.put(
-      GroupDetailController(groupId: widget.group.id ?? 0),
-      tag: 'group_${widget.group.id}',
-    );
+    final tag = "group_${widget.group.id}";
+    _controller = Get.isRegistered<GroupDetailController>(tag: tag)
+        ? Get.find<GroupDetailController>(tag: tag)
+        : Get.put(GroupDetailController(groupId: widget.group.id!), tag: tag);
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       if (mounted) setState(() {});
@@ -54,7 +53,6 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
   @override
   void dispose() {
     _tabController.dispose();
-    _msgInputController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -120,6 +118,10 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
     );
   }
 
+  void _showAddPeopleDialog() {
+    AddPeopleBottomSheet.show(context, _controller);
+  }
+
   // ── Chat Tab View ──────────────────────────────────────────────────────────
   Widget _buildChatTab(ThemeData theme) {
     return Obx(() {
@@ -128,7 +130,10 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
       }
 
       if (_controller.messages.isEmpty) {
-        return const GroupChatEmptyStateWidget();
+        return GroupChatEmptyStateWidget(
+          controller: _controller,
+          onAddMemberTap: _showAddPeopleDialog,
+        );
       }
 
       return ListView.builder(
@@ -144,9 +149,10 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
               msg: msg,
               members: _controller.members,
               onTap: () => _openExpenseDetailScreen(msg, meta),
+              onEditTap: () => _openEditExpenseScreen(msg, meta),
             );
           } else {
-            return TextChatBubbleWidget(msg: msg);
+            return TextChatBubbleWidget(msg: msg  );
           }
         },
       );
@@ -201,12 +207,29 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
     GroupMessageModel msg,
     ExpenseMetadataModel meta,
   ) {
-    Get.to(
-      () => ExpenseDetailScreen(
-        controller: _controller,
-        msg: msg,
-        initialMeta: meta,
-      ),
+    Get.toNamed(
+      AppRoutes.expenseDetail,
+      arguments: {
+        'msg': msg,
+        'meta': meta,
+        'controller': _controller,
+      },
+    );
+  }
+
+  // ── Open Full Screen Edit Expense ───────────────────────────────────────────
+  void _openEditExpenseScreen(
+    GroupMessageModel msg,
+    ExpenseMetadataModel meta,
+  ) {
+    Get.toNamed(
+      AppRoutes.addSplitExpense,
+      arguments: {
+        'controller': _controller,
+        'groupName': widget.group.name,
+        'editingMessage': msg,
+        'initialMeta': meta,
+      },
     );
   }
 
@@ -218,11 +241,12 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
       title: "Split an expense",
       icon: Icons.add_rounded,
       onPressed: () {
-        Get.to(
-          () => AddSplitExpenseScreen(
-            controller: _controller,
-            groupName: widget.group.name,
-          ),
+        Get.toNamed(
+          AppRoutes.addSplitExpense,
+          arguments: {
+            'controller': _controller,
+            'groupName': widget.group.name,
+          },
         );
       },
     );
