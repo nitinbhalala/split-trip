@@ -19,6 +19,7 @@ import 'package:split_trip/core/common/widgets/app_snackbar.dart';
 import 'package:split_trip/data/service/shared_preferences_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:split_trip/services/auth/google_auth_service.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -225,19 +226,27 @@ class SettingsScreen extends StatelessWidget {
                 //   },
                 // ),
                 AppDivider(color: theme.colorScheme.outlineVariant),
-                _SettingsTile(
-                  icon: Icons.info_outline_rounded,
-                  iconColor: Colors.blue,
-                  title: "Version",
-                  subtitle: "App version and details",
-                  trailing: Text(
-                    "1.0.0+1",
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      fontSize: AppSize.sp(11),
-                    ),
-                  ),
-                  onTap: () {},
+                FutureBuilder<PackageInfo>(
+                  future: PackageInfo.fromPlatform(),
+                  builder: (context, snapshot) {
+                    final versionStr = snapshot.hasData
+                        ? "${snapshot.data!.version}+${snapshot.data!.buildNumber}"
+                        : "1.0.0+1";
+                    return _SettingsTile(
+                      icon: Icons.info_outline_rounded,
+                      iconColor: Colors.blue,
+                      title: "Version",
+                      subtitle: "App version and details",
+                      trailing: Text(
+                        versionStr,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontSize: AppSize.sp(11),
+                        ),
+                      ),
+                      onTap: () {},
+                    );
+                  },
                 ),
                 AppDivider(color: theme.colorScheme.outlineVariant),
                 _SettingsTile(
@@ -296,7 +305,8 @@ class SettingsScreen extends StatelessWidget {
       context: context,
       messageAlign: TextAlign.center,
       title: "Logout",
-      message: "Are you sure you want to sign out of your account?",
+      message:
+          "Are you sure you want to sign out of your account? Please ensure you have performed your daily backup before logging out.",
       confirmText: "Logout",
       messageColor: Theme.of(context).colorScheme.onSurface,
       cancelText: "Cancel",

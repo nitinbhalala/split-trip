@@ -1,6 +1,6 @@
 class DBConstants {
   static const String databaseName = "split_trip.db";
-  static const int databaseVersion = 5;
+  static const int databaseVersion = 1;
 
   // Table Names
   static const String categoriesTable = "categories";
@@ -45,5 +45,18 @@ class DBConstants {
   static const String msgText = "message_text";
   static const String msgAmount = "amount";
   static const String msgIsExpense = "is_expense";
+
+  /// Generates a sanitized database filename specific to the logged-in user email.
+  static String getDatabaseNameForUser(String? email) {
+    if (email == null || email.trim().isEmpty) {
+      return databaseName;
+    }
+    final sanitizedEmail = email
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]'), '_');
+    return "split_trip_$sanitizedEmail.db";
+  }
 }
+
 

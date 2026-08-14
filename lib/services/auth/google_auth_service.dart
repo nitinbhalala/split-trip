@@ -4,9 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis_auth/googleapis_auth.dart' as auth;
 import 'package:split_trip/core/const/app_string.dart';
+import 'package:split_trip/data/database/database_provider.dart';
 
 class GoogleAuthService {
   GoogleAuthService._();
+
 
   static const List<String> _scopes = <String>[
     'email',
@@ -164,14 +166,18 @@ class GoogleAuthService {
     // google_sign_in v7+ removed accessToken from GoogleSignInAuthentication.
     // idToken alone is sufficient for Firebase Google sign-in.
     final credential = GoogleAuthProvider.credential(idToken: idToken);
-    return await _firebaseAuth.signInWithCredential(credential);
+    final userCredential = await _firebaseAuth.signInWithCredential(credential);
+    await DatabaseProvider.switchUserDatabase(googleUser.email);
+    return userCredential;
   }
 
   /// Signs out from both Google and Firebase.
   static Future<void> signOut() async {
     await Future.wait([_googleSignIn.signOut(), _firebaseAuth.signOut()]);
     _currentUser = null;
+    await DatabaseProvider.switchUserDatabase(null);
   }
+
 
   /// Permanently deletes the current Firebase user account and signs out from Google.
   static Future<void> deleteUserAccount() async {

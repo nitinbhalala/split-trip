@@ -6,6 +6,7 @@ import 'package:split_trip/data/model/expense_metadata_model.dart';
 import 'package:split_trip/data/model/group_member_model.dart';
 import 'package:split_trip/data/model/group_message_model.dart';
 import 'package:split_trip/data/model/group_model.dart';
+import 'package:split_trip/modules/Group/controller/group_detail_controller.dart';
 import 'package:split_trip/modules/Settings/controller/profile_controller.dart';
 import 'package:split_trip/services/backup/backup_service.dart';
 
@@ -160,11 +161,27 @@ class GroupController extends GetxController {
     }
   }
 
-  /// Deletes a group from SQLite database.
+  /// Deletes a group from SQLite database along with its members & messages.
   Future<bool> deleteGroup(int id) async {
     isLoading.value = true;
     try {
       final db = DatabaseHelper.instance;
+
+      // Delete group members
+      await db.delete(
+        table: DBConstants.groupMembersTable,
+        where: "${DBConstants.memberGroupId} = ?",
+        args: [id],
+      );
+
+      // Delete group messages
+      await db.delete(
+        table: DBConstants.groupMessagesTable,
+        where: "${DBConstants.msgGroupId} = ?",
+        args: [id],
+      );
+
+      // Delete group record
       final count = await db.delete(
         table: DBConstants.groupsTable,
         where: "${DBConstants.id} = ?",
@@ -172,6 +189,10 @@ class GroupController extends GetxController {
       );
 
       if (count > 0) {
+        final tag = "group_$id";
+        if (Get.isRegistered<GroupDetailController>(tag: tag)) {
+          Get.delete<GroupDetailController>(tag: tag);
+        }
         await loadGroups();
         await BackupService.markDataChanged();
         return true;

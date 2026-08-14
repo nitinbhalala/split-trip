@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:split_trip/core/common/helper/app_helper.dart';
 import 'package:split_trip/core/common/widgets/app_snackbar.dart';
 import 'package:split_trip/data/model/expense_metadata_model.dart';
+import 'package:split_trip/data/model/group_member_model.dart';
 import 'package:split_trip/data/model/group_message_model.dart';
 import 'package:split_trip/modules/Group/controller/group_detail_controller.dart';
 
@@ -48,6 +49,11 @@ class AddSplitExpenseController extends GetxController {
       if (descFocusNode.hasFocus) {
         isEditingDescription = true;
       }
+    });
+
+    // Listen to changes in groupDetailController.members so newly added or loaded members are synced immediately!
+    ever<List<GroupMemberModel>>(groupDetailController.members, (membersList) {
+      _syncMembers(membersList);
     });
 
     // Initialize custom controllers for all members
@@ -98,16 +104,40 @@ class AddSplitExpenseController extends GetxController {
       }
     } else {
       // ── Pre-fill New Expense Data ─────────────────────────────────────
-      for (var m in groupDetailController.members) {
-        if (m.id != null) {
-          selectedMemberIds.add(m.id!);
-        }
-      }
+      _syncMembers(groupDetailController.members);
+    }
+  }
 
-      if (groupDetailController.members.isNotEmpty) {
-        selectedPayerId.value = groupDetailController.members.first.id;
+  /// Automatically sync member controllers and selection when members list updates dynamically
+  void _syncMembers(List<GroupMemberModel> membersList) {
+    final currentIds = membersList.map((m) => m.id).whereType<int>().toSet();
+
+    // 1. Initialize controllers for new members
+    for (var m in membersList) {
+      if (m.id != null && !customControllers.containsKey(m.id!)) {
+        customControllers[m.id!] = TextEditingController();
       }
     }
+
+    if (!isEditMode) {
+      // Add any new members to selection
+      for (var id in currentIds) {
+        if (!selectedMemberIds.contains(id)) {
+          selectedMemberIds.add(id);
+        }
+      }
+    }
+
+    // Remove any deleted member IDs from selectedMemberIds
+    selectedMemberIds.removeWhere((id) => !currentIds.contains(id));
+
+    // Reset payer if current selected payer is no longer in group or is null
+    if (selectedPayerId.value == null || !currentIds.contains(selectedPayerId.value)) {
+      selectedPayerId.value = membersList.isNotEmpty ? membersList.first.id : null;
+    }
+
+    selectedMemberIds.refresh();
+    update();
   }
 
   @override

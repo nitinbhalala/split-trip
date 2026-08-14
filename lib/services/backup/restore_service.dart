@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:split_trip/data/database/database_provider.dart';
+import 'package:split_trip/data/database/db_constants.dart';
 import 'package:split_trip/modules/Settings/controller/profile_controller.dart';
 import 'package:split_trip/services/auth/google_auth_service.dart';
 import 'package:split_trip/services/google_drive/google_drive_service.dart';
@@ -110,4 +112,33 @@ class RestoreService {
       );
     }
   }
+
+  /// Checks whether a backup file exists on Google Drive for the given account.
+  static Future<bool> hasBackup(GoogleSignInAccount account) async {
+    try {
+      final client = await GoogleAuthService.getAuthenticatedClient(allowInteractive: false);
+      if (client == null) return false;
+
+      return await GoogleDriveService.checkFileExists(
+        client: client,
+        fileName: 'expense_backup.gz',
+        folderName: 'Expense Tracker',
+      );
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Checks if the local SQLite database is currently empty (e.g. fresh install or uninstalled app).
+  static Future<bool> isLocalDatabaseEmpty() async {
+    try {
+      final db = await DatabaseProvider.database();
+      final groups = await db.query(DBConstants.groupsTable, limit: 1);
+      final messages = await db.query(DBConstants.groupMessagesTable, limit: 1);
+      return groups.isEmpty && messages.isEmpty;
+    } catch (_) {
+      return true;
+    }
+  }
 }
+

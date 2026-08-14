@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:split_trip/core/common/button/app_elevated_button.dart';
 import 'package:split_trip/core/common/widgets/app_alert_dialog.dart';
+import 'package:split_trip/core/common/widgets/app_snackbar.dart';
 import 'package:split_trip/core/common/widgets/common_app_bar.dart';
 import 'package:split_trip/core/common/widgets/custom_text_field.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
@@ -10,6 +11,9 @@ import 'package:split_trip/modules/Group/controller/group_controller.dart';
 import 'package:split_trip/modules/Group/screen/widgets/create_group_bottom_sheet.dart';
 import 'package:split_trip/modules/Group/screen/widgets/group_empty_state.dart';
 import 'package:split_trip/modules/Group/screen/widgets/group_list_item.dart';
+import 'package:split_trip/data/database/database_provider.dart';
+import 'package:split_trip/modules/Settings/controller/backup_controller.dart';
+import 'package:split_trip/services/auth/google_auth_service.dart';
 
 class DashbordScreen extends StatefulWidget {
   const DashbordScreen({super.key});
@@ -29,7 +33,27 @@ class _DashbordScreenState extends State<DashbordScreen> {
     _groupController = Get.isRegistered<GroupController>()
         ? Get.find<GroupController>()
         : Get.put(GroupController());
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkBackupOnDashboard();
+    });
   }
+
+  Future<void> _checkBackupOnDashboard() async {
+    final googleAccount = await GoogleAuthService.getCurrentGoogleUser();
+    if (googleAccount != null) {
+      await DatabaseProvider.switchUserDatabase(googleAccount.email);
+      await _groupController.loadGroups();
+
+      if (!Get.isRegistered<BackupController>()) {
+        Get.put(BackupController());
+      }
+      final backupController = Get.find<BackupController>();
+      await backupController.checkAndPromptRestoreOnDashboard(googleAccount);
+    }
+  }
+
+
 
   @override
   void dispose() {
@@ -74,10 +98,12 @@ class _DashbordScreenState extends State<DashbordScreen> {
         TextButton(
           onPressed: () async {
             Get.back();
-            // final success = await _groupController.deleteGroup(groupId);
-            // if (success) {
-            //   AppSnackbar.success(message: "Group deleted successfully.");
-            // }
+            final success = await _groupController.deleteGroup(groupId);
+            if (success) {
+              AppSnackbar.success(message: "Group '$groupName' deleted successfully.");
+            } else {
+              AppSnackbar.error(message: "Failed to delete group.");
+            }
           },
           child: Text(
             "Delete",

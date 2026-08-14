@@ -170,6 +170,7 @@ class GroupDetailController extends GetxController {
           settlements.add({
             'debtor': debtorName,
             'creditor': payerName,
+            'payer': payerName,
             'amount': share,
             'title': meta.title,
           });
@@ -192,10 +193,10 @@ class GroupDetailController extends GetxController {
       final db = DatabaseHelper.instance;
       final values = <String, dynamic>{
         'name': name.trim(),
-        if (description != null) 'description': description.trim(),
-        'icon_name': ?iconName,
-        'color_value': ?colorValue,
-        'image_path': ?imagePath,
+        'description': description?.trim() ?? "",
+        'icon_name': iconName ?? "group_work",
+        'color_value': colorValue ?? 0xFF3B82F6,
+        'image_path': imagePath ?? "",
       };
 
       final count = await db.update(
@@ -244,6 +245,20 @@ class GroupDetailController extends GetxController {
 
       if (id > 0) {
         await loadGroupData();
+        // Sync any other active GroupDetailController instance for this group
+        final tag = "group_$groupId";
+        if (Get.isRegistered<GroupDetailController>(tag: tag)) {
+          final taggedCtrl = Get.find<GroupDetailController>(tag: tag);
+          if (taggedCtrl != this) {
+            await taggedCtrl.loadGroupData();
+          }
+        }
+        if (Get.isRegistered<GroupDetailController>()) {
+          final untaggedCtrl = Get.find<GroupDetailController>();
+          if (untaggedCtrl != this && untaggedCtrl.groupId == groupId) {
+            await untaggedCtrl.loadGroupData();
+          }
+        }
         await BackupService.markDataChanged();
         return true;
       }
@@ -266,6 +281,20 @@ class GroupDetailController extends GetxController {
 
       if (count > 0) {
         await loadGroupData();
+        // Sync any other active GroupDetailController instance for this group
+        final tag = "group_$groupId";
+        if (Get.isRegistered<GroupDetailController>(tag: tag)) {
+          final taggedCtrl = Get.find<GroupDetailController>(tag: tag);
+          if (taggedCtrl != this) {
+            await taggedCtrl.loadGroupData();
+          }
+        }
+        if (Get.isRegistered<GroupDetailController>()) {
+          final untaggedCtrl = Get.find<GroupDetailController>();
+          if (untaggedCtrl != this && untaggedCtrl.groupId == groupId) {
+            await untaggedCtrl.loadGroupData();
+          }
+        }
         await BackupService.markDataChanged();
         return true;
       }

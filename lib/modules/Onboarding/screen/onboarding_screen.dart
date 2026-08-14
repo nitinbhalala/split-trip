@@ -123,7 +123,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Text(
                           item.title,
                           textAlign: TextAlign.center,
-                          style: theme.textTheme.headlineMedium,
+                          style: theme.textTheme.titleLarge,
                         ),
                         AppSize.gapH(12),
 
@@ -158,7 +158,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Padding(
               padding: AppSize.symmetric(horizontal: 24),
               child: AppElevatedButton(
-                textStyle: theme.textTheme.titleLarge?.copyWith(
+                textStyle: theme.textTheme.titleMedium?.copyWith(
                   color: AppColors.white,
                   letterSpacing: 1.5,
                 ),

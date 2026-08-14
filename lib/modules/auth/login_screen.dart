@@ -1,14 +1,16 @@
+import 'dart:io';
+
 import 'package:flutter_svg/svg.dart';
 import 'package:split_trip/core/common/widgets/common_social_button.dart';
 import 'package:split_trip/core/const/app_assets.dart';
 import 'package:split_trip/core/router/app_pages.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
 import 'package:split_trip/core/theme/app_color.dart';
-// import 'package:split_trip/data/service/notification_service.dart';
 import 'package:split_trip/services/analytics/analytics_service.dart';
 import 'package:split_trip/services/auth/apple_auth_service.dart';
 import 'package:split_trip/services/auth/google_auth_service.dart';
 import 'package:split_trip/modules/Settings/controller/profile_controller.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -103,6 +105,8 @@ class _LoginScreenState extends State<LoginScreen>
       if (mounted) setState(() => _isGoogleLoading = false);
     }
   }
+
+
 
   Future<void> _handleAppleSignIn() async {
     if (_isGoogleLoading || _isAppleLoading) return;
@@ -205,18 +209,19 @@ class _LoginScreenState extends State<LoginScreen>
                         ? () {}
                         : _handleGoogleSignIn,
                   ),
+                  if (Platform.isIOS) ...[
+                    AppSize.gapH(10),
 
-                  AppSize.gapH(10),
-
-                  // ── Apple Login Button ─────────────────────────────────────
-                  CommonSocialButton(
-                    text: "Continue with Apple",
-                    imagePath: AppAssets.appleIcon,
-                    isLoading: _isAppleLoading,
-                    onTap: (_isGoogleLoading || _isAppleLoading)
-                        ? () {}
-                        : _handleAppleSignIn,
-                  ),
+                    // ── Apple Login Button ─────────────────────────────────────
+                    CommonSocialButton(
+                      text: "Continue with Apple",
+                      imagePath: AppAssets.appleIcon,
+                      isLoading: _isAppleLoading,
+                      onTap: (_isGoogleLoading || _isAppleLoading)
+                          ? () {}
+                          : _handleAppleSignIn,
+                    ),
+                  ],
                   AppSize.gapH(20),
                 ],
               ),

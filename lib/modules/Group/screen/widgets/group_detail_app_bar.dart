@@ -49,7 +49,10 @@ class GroupDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
         focusColor: Colors.transparent,
         splashColor: Colors.transparent,
         onTap: () {
-          Get.toNamed(AppRoutes.groupInfo, arguments: group);
+          Get.toNamed(
+            AppRoutes.groupInfo,
+            arguments: {'group': group, 'controller': controller},
+          );
         },
         child: Row(
           children: [
@@ -117,7 +120,10 @@ class GroupDetailAppBar extends StatelessWidget implements PreferredSizeWidget {
           padding: AppSize.only(right: 20),
           icon: Icon(Icons.group_rounded, color: theme.colorScheme.primary),
           onPressed: () {
-            Get.toNamed(AppRoutes.groupInfo, arguments: group);
+            Get.toNamed(
+              AppRoutes.groupInfo,
+              arguments: {'group': group, 'controller': controller},
+            );
           },
         ),
         AppSize.gapW(5),

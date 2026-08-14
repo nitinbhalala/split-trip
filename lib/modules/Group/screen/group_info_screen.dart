@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+
 import 'package:get/get.dart';
 import 'package:split_trip/core/common/widgets/app_alert_dialog.dart';
 import 'package:split_trip/core/common/widgets/app_snackbar.dart';
@@ -7,6 +8,7 @@ import 'package:split_trip/core/common/widgets/common_app_bar.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
 import 'package:split_trip/core/theme/app_color.dart';
 import 'package:split_trip/data/model/group_model.dart';
+import 'package:split_trip/modules/Group/controller/group_controller.dart';
 import 'package:split_trip/modules/Group/controller/group_detail_controller.dart';
 import 'package:split_trip/modules/Group/screen/widgets/add_people_bottom_sheet.dart';
 import 'package:split_trip/modules/Group/screen/widgets/create_group_bottom_sheet.dart';
@@ -45,6 +47,9 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
       colorValue: widget.controller.colorValue.value != 0
           ? widget.controller.colorValue.value
           : widget.group.colorValue,
+      imagePath: widget.controller.imagePath.value.isNotEmpty
+          ? widget.controller.imagePath.value
+          : widget.group.imagePath,
       createdAt: widget.group.createdAt,
       updatedAt: widget.group.updatedAt,
     );
@@ -101,6 +106,54 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
               color: AppColors.primary,
               fontWeight: .w500,
             ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _confirmDeleteGroup() {
+    final groupName = widget.controller.groupName.value.isNotEmpty
+        ? widget.controller.groupName.value
+        : widget.group.name;
+    final groupId = widget.group.id;
+    if (groupId == null) return;
+
+    AppAlertDialog.show(
+      titleText: "Delete Group",
+      contentText: "Are you sure you want to delete '$groupName'?",
+      actionsAlignment: MainAxisAlignment.spaceBetween,
+      actions: [
+        TextButton(
+          onPressed: () => Get.back(),
+          child: Text(
+            "Cancel",
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: () async {
+            Get.back();
+            final groupController = Get.isRegistered<GroupController>()
+                ? Get.find<GroupController>()
+                : Get.put(GroupController());
+            final success = await groupController.deleteGroup(groupId);
+            if (success) {
+              Get.until((route) => route.isFirst);
+              AppSnackbar.success(
+                message: "Group '$groupName' deleted successfully.",
+              );
+            } else {
+              AppSnackbar.error(message: "Failed to delete group.");
+            }
+          },
+          child: Text(
+            "Delete",
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(color: AppColors.error),
           ),
         ),
       ],
@@ -164,6 +217,7 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                   );
                 }),
               ),
+
               AppSize.gapH(5),
 
               // Group Name Title with Edit Pen Icon (Image 3 Style)
@@ -263,138 +317,86 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                   );
                 }
 
-                return Expanded(
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: members.length,
-                    separatorBuilder: (_, _) => AppSize.gapH(0),
-                    itemBuilder: (context, index) {
-                      final member = members[index];
-                      final isOwner = index == 0;
+                return ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: members.length,
+                  separatorBuilder: (_, _) => AppSize.gapH(0),
+                  itemBuilder: (context, index) {
+                    final member = members[index];
+                    final isOwner = index == 0;
 
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
-                        leading: CircleAvatar(
-                          radius: AppSize.sp(16),
-                          backgroundColor: theme.colorScheme.primary,
-                          child: Text(
-                            member.name.isNotEmpty
-                                ? member.name[0].toUpperCase()
-                                : "M",
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.white,
-                            ),
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      leading: CircleAvatar(
+                        radius: AppSize.sp(16),
+                        backgroundColor: theme.colorScheme.primary,
+                        child: Text(
+                          member.name.isNotEmpty
+                              ? member.name[0].toUpperCase()
+                              : "M",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.white,
                           ),
                         ),
-                        title: Text(
-                          member.name,
-                          style: theme.textTheme.titleSmall,
-                        ),
-                        trailing: isOwner
-                            ? Container(
-                                padding: AppSize.symmetric(
-                                  horizontal: 12,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF1D4ED8),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Text(
-                                  "Admin",
-                                  style: theme.textTheme.labelMedium?.copyWith(
-                                    color: AppColors.white,
-                                  ),
-                                ),
-                              )
-                            : IconButton(
-                                icon: Icon(
-                                  Icons.do_not_disturb_on_outlined,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                  size: AppSize.sp(24),
-                                ),
-                                onPressed: () {
-                                  if (member.id != null) {
-                                    _confirmRemoveMember(
-                                      member.id!,
-                                      member.name,
-                                    );
-                                  }
-                                },
+                      ),
+                      title: Text(
+                        member.name,
+                        style: theme.textTheme.titleSmall,
+                      ),
+                      trailing: isOwner
+                          ? Container(
+                              padding: AppSize.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
                               ),
-                      );
-
-                      // Row(
-                      //   children: [
-                      //     // Avatar
-                      //     CircleAvatar(
-                      //       radius: AppSize.sp(16),
-                      //       backgroundColor: theme.colorScheme.primary,
-                      //       child: Text(
-                      //         member.name.isNotEmpty
-                      //             ? member.name[0].toUpperCase()
-                      //             : "M",
-                      //         style: TextStyle(
-                      //           fontWeight: FontWeight.w700,
-
-                      //           color: AppColors.white,
-                      //         ),
-                      //       ),
-                      //     ),
-                      //     AppSize.gapW(14),
-
-                      //     // Name
-                      //     Expanded(
-                      //       child: Text(
-                      //         member.name,
-                      //         style: theme.textTheme.titleSmall,
-                      //       ),
-                      //     ),
-
-                      //     // Admin Badge OR Minus Remove Button (Image 3 Style)
-                      //     if (isOwner)
-                      //       Container(
-                      //         padding: AppSize.symmetric(
-                      //           horizontal: 12,
-                      //           vertical: 4,
-                      //         ),
-                      //         decoration: BoxDecoration(
-                      //           color: const Color(
-                      //             0xFF1D4ED8,
-                      //           ), // GPay Blue Admin Badge
-                      //           borderRadius: BorderRadius.circular(16),
-                      //         ),
-                      //         child: Text(
-                      //           "Admin",
-                      //           style: theme.textTheme.labelMedium!.copyWith(
-                      //             color: AppColors.white,
-                      //           ),
-                      //         ),
-                      //       )
-                      //     else
-                      //       Center(
-                      //         child: GestureDetector(
-                      //           child: Icon(
-                      //             Icons
-                      //                 .do_not_disturb_on_outlined, // Minus Remove Button
-                      //             color: theme.colorScheme.onSurfaceVariant,
-                      //             size: AppSize.sp(22),
-                      //           ),
-                      //           onTap: () {
-                      //             if (member.id != null) {
-                      //               _confirmRemoveMember(member.id!, member.name);
-                      //             }
-                      //           },
-                      //         ),
-                      //       ),
-                      //   ],
-                      // );
-                    },
-                  ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1D4ED8),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Text(
+                                "Admin",
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: AppColors.white,
+                                ),
+                              ),
+                            )
+                          : IconButton(
+                              icon: Icon(
+                                Icons.do_not_disturb_on_outlined,
+                                color: theme.colorScheme.onSurfaceVariant,
+                                size: AppSize.sp(24),
+                              ),
+                              onPressed: () {
+                                if (member.id != null) {
+                                  _confirmRemoveMember(member.id!, member.name);
+                                }
+                              },
+                            ),
+                    );
+                  },
                 );
               }),
+              AppSize.gapH(16),
+              Center(
+                child: TextButton.icon(
+                  onPressed: _confirmDeleteGroup,
+                  icon: Icon(
+                    Icons.delete_outline_rounded,
+                    color: AppColors.error,
+                    size: AppSize.sp(20),
+                  ),
+                  label: Text(
+                    "Delete group",
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: AppColors.error,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),

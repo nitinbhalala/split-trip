@@ -97,4 +97,30 @@ class GoogleDriveService {
     }
     return bytes;
   }
+
+  /// Checks if a file exists inside the target folder without downloading it.
+  static Future<bool> checkFileExists({
+    required AuthClient client,
+    required String fileName,
+    required String folderName,
+  }) async {
+    try {
+      final driveApi = drive.DriveApi(client);
+      final folderQuery = "name = '$folderName' and mimeType = '$_folderMimeType' and trashed = false";
+      final folderList = await driveApi.files.list(q: folderQuery, spaces: 'drive');
+
+      if (folderList.files == null || folderList.files!.isEmpty) {
+        return false;
+      }
+
+      final folderId = folderList.files!.first.id!;
+      final fileQuery = "name = '$fileName' and '$folderId' in parents and trashed = false";
+      final fileList = await driveApi.files.list(q: fileQuery, spaces: 'drive');
+
+      return fileList.files != null && fileList.files!.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
 }
+

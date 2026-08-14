@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'db_constants.dart';
@@ -6,17 +7,42 @@ class DatabaseProvider {
   DatabaseProvider._();
 
   static Database? _database;
+  static String? _activeUserEmail;
+  static String? _activeDbName;
+
+  /// Switches the active database to the specified user email.
+  static Future<void> switchUserDatabase(String? userEmail) async {
+    final targetDbName = DBConstants.getDatabaseNameForUser(userEmail);
+    if (_database != null &&
+        _database!.isOpen &&
+        _activeDbName == targetDbName) {
+      return;
+    }
+    await close();
+    _activeUserEmail = userEmail;
+    _activeDbName = targetDbName;
+  }
 
   static Future<Database> database() async {
-    if (_database != null && _database!.isOpen) return _database!;
+    final activeEmail =
+        _activeUserEmail ?? FirebaseAuth.instance.currentUser?.email;
+    final targetDbName = DBConstants.getDatabaseNameForUser(activeEmail);
+
+    if (_database != null && _database!.isOpen) {
+      if (_activeDbName == targetDbName) {
+        return _database!;
+      }
+      await close();
+    }
 
     final dbPath = await getDatabasesPath();
-    final path = join(dbPath, DBConstants.databaseName);
+    final path = join(dbPath, targetDbName);
+    _activeDbName = targetDbName;
+    _activeUserEmail = activeEmail;
 
     _database = await openDatabase(
       path,
-      version: DBConstants
-          .databaseVersion, // Version 1 for Play Store Initial Release
+      version: DBConstants.databaseVersion,
       onCreate: (db, version) async {
         // 1. Categories Table
         await db.execute('''
@@ -80,58 +106,6 @@ class DatabaseProvider {
           )
         ''');
       },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) {
-          await db.execute('''
-            CREATE TABLE IF NOT EXISTS ${DBConstants.groupsTable} (
-              ${DBConstants.id} INTEGER PRIMARY KEY AUTOINCREMENT,
-              ${DBConstants.groupName} TEXT NOT NULL,
-              ${DBConstants.groupDescription} TEXT,
-              ${DBConstants.createdAt} TEXT,
-              ${DBConstants.updatedAt} TEXT
-            )
-          ''');
-        }
-        if (oldVersion < 3) {
-          await db.execute('''
-            CREATE TABLE IF NOT EXISTS ${DBConstants.groupMembersTable} (
-              ${DBConstants.id} INTEGER PRIMARY KEY AUTOINCREMENT,
-              ${DBConstants.memberGroupId} INTEGER NOT NULL,
-              ${DBConstants.memberName} TEXT NOT NULL,
-              ${DBConstants.memberPhone} TEXT,
-              ${DBConstants.createdAt} TEXT
-            )
-          ''');
-          await db.execute('''
-            CREATE TABLE IF NOT EXISTS ${DBConstants.groupMessagesTable} (
-              ${DBConstants.id} INTEGER PRIMARY KEY AUTOINCREMENT,
-              ${DBConstants.msgGroupId} INTEGER NOT NULL,
-              ${DBConstants.msgSenderName} TEXT NOT NULL,
-              ${DBConstants.msgText} TEXT NOT NULL,
-              ${DBConstants.msgAmount} REAL DEFAULT 0.0,
-              ${DBConstants.msgIsExpense} INTEGER DEFAULT 0,
-              ${DBConstants.createdAt} TEXT
-            )
-          ''');
-          if (oldVersion < 4) {
-            try {
-              await db.execute(
-                'ALTER TABLE ${DBConstants.groupsTable} ADD COLUMN ${DBConstants.groupIconName} TEXT DEFAULT "group_work";',
-              );
-              await db.execute(
-                'ALTER TABLE ${DBConstants.groupsTable} ADD COLUMN ${DBConstants.groupColorValue} INTEGER DEFAULT 4282081782;',
-              );
-            } catch (_) {}
-          }
-        }
-        if (oldVersion < 5) {
-          try {
-            await db.execute(
-              'ALTER TABLE ${DBConstants.groupsTable} ADD COLUMN ${DBConstants.groupImagePath} TEXT DEFAULT "";',
-            );
-          } catch (_) {}
-        }
-      },
     );
 
     return _database!;
@@ -142,9 +116,12 @@ class DatabaseProvider {
       await _database!.close();
     }
     _database = null;
+    _activeDbName = null;
   }
 
   static void clear() {
     _database = null;
+    _activeDbName = null;
+    _activeUserEmail = null;
   }
 }

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:split_trip/core/common/widgets/app_alert_dialog.dart';
 
@@ -32,7 +33,7 @@ class ImagePickerService {
     required ImageSource source,
     double maxWidth = 512,
     double maxHeight = 512,
-    int quality = 85,
+    int quality = 70,
   }) async {
     // 1. Check / request permissions
     final permResult = await _requestPermission(source);
@@ -52,7 +53,19 @@ class ImagePickerService {
         return const ImagePickResult();
       }
 
-      return ImagePickResult(file: File(xFile.path));
+      // Save picked image permanently in app documents directory so OS cache cleaner does not delete it
+      final appDir = await getApplicationDocumentsDirectory();
+      final imagesDir = Directory('${appDir.path}/app_images');
+      if (!imagesDir.existsSync()) {
+        await imagesDir.create(recursive: true);
+      }
+
+      final fileName = 'img_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final permanentFile = await File(
+        xFile.path,
+      ).copy('${imagesDir.path}/$fileName');
+
+      return ImagePickResult(file: permanentFile);
     } catch (e) {
       return ImagePickResult(error: 'Failed to pick image: $e');
     }

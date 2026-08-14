@@ -68,9 +68,12 @@ class AppPages {
           );
         }
         final group = args as GroupModel;
-        final controller = Get.isRegistered<GroupDetailController>()
-            ? Get.find<GroupDetailController>()
-            : Get.put(GroupDetailController(groupId: group.id ?? 0));
+        final tag = "group_${group.id}";
+        final controller = Get.isRegistered<GroupDetailController>(tag: tag)
+            ? Get.find<GroupDetailController>(tag: tag)
+            : (Get.isRegistered<GroupDetailController>()
+                ? Get.find<GroupDetailController>()
+                : Get.put(GroupDetailController(groupId: group.id ?? 0), tag: tag));
         return GroupInfoScreen(group: group, controller: controller);
       },
     ),

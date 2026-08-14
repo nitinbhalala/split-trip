@@ -62,8 +62,6 @@ class GPaySplitCardWidget extends StatelessWidget {
             (meta.paidMemberNames.length == 1 &&
                 meta.paidMemberNames.contains(meta.paidByName)));
 
-        
-       
     final double progressValue = msg.amount > 0
         ? (totalPaidAmount / msg.amount).clamp(0.0, 1.0)
         : 0.0;
@@ -249,7 +247,7 @@ class GPaySplitCardWidget extends StatelessWidget {
                       ],
                       Text(
                         meta.isClosed
-                            ? "No payment required"
+                            ? "  No payment required"
                             : (formattedTime.isNotEmpty
                                   ? formattedTime
                                   : "Just now"),

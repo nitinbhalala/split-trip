@@ -38,78 +38,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ? Get.find<ProfileController>()
         : Get.put(ProfileController());
 
-    // Sync Firebase details if empty
-    final firebaseUser = FirebaseAuth.instance.currentUser;
-    if (firebaseUser != null) {
-      bool updated = false;
-
-      if (_controller.email.value.isEmpty && firebaseUser.email != null) {
-        _controller.email.value = firebaseUser.email!;
-        updated = true;
-      }
-
-      if (_controller.firstName.value.isEmpty) {
-        final displayName = firebaseUser.displayName ?? "";
-        String fName = "";
-        if (displayName.isNotEmpty) {
-          fName = displayName.split(" ").first;
-        } else if (firebaseUser.email != null) {
-          final localPart = firebaseUser.email!.split('@').first;
-          final cleaned = localPart.replaceAll(RegExp(r'[_.-]'), ' ');
-          final parts = cleaned.split(RegExp(r'\s+'));
-          fName = parts.first;
-        }
-        if (fName.isNotEmpty) {
-          fName = fName[0].toUpperCase() + fName.substring(1);
-          _controller.firstName.value = fName;
-          updated = true;
-        }
-      }
-
-      if (_controller.lastName.value.isEmpty) {
-        final displayName = firebaseUser.displayName ?? "";
-        String lName = "";
-        if (displayName.isNotEmpty) {
-          final parts = displayName.split(" ");
-          if (parts.length > 1) {
-            lName = parts.sublist(1).join(" ");
-          }
-        } else if (firebaseUser.email != null) {
-          final localPart = firebaseUser.email!.split('@').first;
-          final cleaned = localPart.replaceAll(RegExp(r'[_.-]'), ' ');
-          final parts = cleaned.split(RegExp(r'\s+'));
-          if (parts.length > 1) {
-            lName = parts.sublist(1).join(" ");
-          }
-        }
-        if (lName.isNotEmpty) {
-          lName = lName
-              .split(' ')
-              .map(
-                (str) => str.isNotEmpty
-                    ? str[0].toUpperCase() + str.substring(1)
-                    : '',
-              )
-              .join(' ');
-          _controller.lastName.value = lName;
-          updated = true;
-        }
-      }
-
-      if (updated) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            _controller.saveProfile(
-              fName: _controller.firstName.value,
-              lName: _controller.lastName.value,
-              emailVal: _controller.email.value,
-              profilePicPath: _controller.profilePicture.value,
-            );
-          }
-        });
-      }
-    }
-
     _firstNameController = TextEditingController(
       text: _controller.firstName.value,
     );
@@ -117,8 +45,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
       text: _controller.lastName.value,
     );
     _emailController = TextEditingController(text: _controller.email.value);
-
     _profilePicPath = _controller.profilePicture.value;
+
+    // Trigger loadProfile if observables are empty or need loading
+    _controller.loadProfile();
+
+    // Listen to changes in ProfileController when loadProfile() completes
+    ever<String>(_controller.firstName, (val) {
+      if (mounted && _firstNameController.text != val) {
+        _firstNameController.text = val;
+      }
+    });
+
+    ever<String>(_controller.lastName, (val) {
+      if (mounted && _lastNameController.text != val) {
+        _lastNameController.text = val;
+      }
+    });
+
+    ever<String>(_controller.email, (val) {
+      if (mounted && _emailController.text != val) {
+        _emailController.text = val;
+      }
+    });
+
+    ever<String>(_controller.profilePicture, (val) {
+      if (mounted) {
+        setState(() {
+          _profilePicPath = val;
+        });
+      }
+    });
   }
 
   @override

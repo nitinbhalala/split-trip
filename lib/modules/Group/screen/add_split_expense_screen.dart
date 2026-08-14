@@ -513,8 +513,8 @@ class _AddSplitExpenseScreenState extends State<AddSplitExpenseScreen> {
                 title: isKeyboardOpen
                     ? "Done"
                     : (splitController.isEditMode
-                        ? "Update request"
-                        : "Send request"),
+                          ? "Update request"
+                          : "Send request"),
                 isEnabled: isEnable,
                 width: isKeyboardOpen ? AppSize.w(310) : double.infinity,
                 height: isKeyboardOpen ? AppSize.h(33) : null,

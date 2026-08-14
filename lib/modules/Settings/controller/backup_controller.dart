@@ -5,6 +5,7 @@ import 'package:split_trip/core/router/app_pages.dart';
 import 'package:split_trip/services/auth/google_auth_service.dart';
 import 'package:split_trip/services/backup/backup_service.dart';
 import 'package:split_trip/services/backup/restore_service.dart';
+import 'package:split_trip/modules/Group/controller/group_controller.dart';
 import 'package:split_trip/modules/Settings/controller/profile_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -14,6 +15,8 @@ import 'package:split_trip/services/analytics/analytics_service.dart';
 class BackupController extends GetxController {
   final RxBool isBackupLoading = false.obs;
   final RxBool isRestoreLoading = false.obs;
+  bool _hasCheckedBackupOnDashboard = false;
+
 
   /// Starts the Backup to Google Drive flow.
   Future<void> backupToGoogleDrive() async {
@@ -291,4 +294,79 @@ class BackupController extends GetxController {
       ],
     );
   }
+
+  /// Checks if local database is empty and a backup exists on Google Drive, and prompts user to restore on Dashboard screen.
+  Future<void> checkAndPromptRestoreOnDashboard(GoogleSignInAccount account) async {
+    if (_hasCheckedBackupOnDashboard) return;
+    _hasCheckedBackupOnDashboard = true;
+
+    try {
+      final isEmpty = await RestoreService.isLocalDatabaseEmpty();
+      if (!isEmpty) return;
+
+      final hasBackup = await RestoreService.hasBackup(account);
+      if (!hasBackup) return;
+
+      // Show popup dialog on Dashboard Screen
+      AppAlertDialog.show(
+        titleText: "Restore Backup Found",
+        contentText:
+            "We found an existing data backup associated with ${account.email} on Google Drive.\n\n"
+            "Would you like to restore your previous expenses and groups now?",
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text("Skip"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Get.back();
+              await _executeRestoreForAccount(account);
+            },
+            child: const Text("Restore Data"),
+          ),
+        ],
+      );
+    } catch (e) {
+      AppLogger.error("Failed checking backup on dashboard: $e");
+    }
+  }
+
+  Future<void> _executeRestoreForAccount(GoogleSignInAccount account) async {
+    if (isRestoreLoading.value) return;
+    isRestoreLoading.value = true;
+
+    _showLoaderDialog("Restoring your data from Google Drive...");
+
+    try {
+      final result = await RestoreService.performRestore(account);
+      await _hideLoaderDialog();
+
+      await AnalyticsService.logRestore(
+        success: result.success,
+        error: result.success
+            ? null
+            : (result.error ?? "Failed to restore database."),
+      );
+
+      if (result.success) {
+        if (Get.isRegistered<GroupController>()) {
+          await Get.find<GroupController>().loadGroups();
+        }
+        AppSnackbar.success(message: "Data restored successfully.");
+      } else {
+        AppSnackbar.error(
+          message: result.error ?? "Failed to restore data.",
+        );
+      }
+    } catch (e) {
+      await _hideLoaderDialog();
+      await AnalyticsService.logRestore(success: false, error: e.toString());
+      AppSnackbar.error(message: "Restore failed: $e");
+    } finally {
+      isRestoreLoading.value = false;
+    }
+  }
 }
+
+

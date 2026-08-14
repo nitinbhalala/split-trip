@@ -67,7 +67,7 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
                 meta.toMap(),
               );
             }
-            setState(() {});
+            Get.back();
           },
           child: Text(
             "Close request",
