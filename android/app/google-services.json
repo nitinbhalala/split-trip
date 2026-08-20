@@ -14,11 +14,35 @@
       },
       "oauth_client": [
         {
-          "client_id": "582158608949-uhkn9149srdk9fh2kbci5jsdt7j69thp.apps.googleusercontent.com",
+          "client_id": "582158608949-bu5tukjpna06ebchspad5ugtvn470poh.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "app.rudara.splittrip",
-            "certificate_hash": "9000162b9ae848db9a546bc08ccbee094ef9676b"
+            "certificate_hash": "883f28f03f23906806723770bd60758f21b5b020"
+          }
+        },
+        {
+          "client_id": "582158608949-k37f1ipsg9k1m91cldgp75djec8grh8g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.rudara.splittrip",
+            "certificate_hash": "f2da62cfcbe88e6d603afe3b2665335e8987bf72"
+          }
+        },
+        {
+          "client_id": "582158608949-plurvu9p4cki4slfl20vkku4nm1p253c.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.rudara.splittrip",
+            "certificate_hash": "ef2008c73c2db28a03f1f40492021560d16e05af"
+          }
+        },
+        {
+          "client_id": "582158608949-shnje9hh03jelp3o3lgurk8e8ehhg9nr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.rudara.splittrip",
+            "certificate_hash": "8358b674dc4cf1907a037249899c7e46c383d920"
           }
         },
         {

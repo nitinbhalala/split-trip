@@ -1,14 +1,17 @@
 import 'dart:io';
 
 import 'package:flutter_svg/svg.dart';
+import 'package:split_trip/core/common/widgets/app_logger.dart';
+import 'package:split_trip/core/common/widgets/app_snackbar.dart';
 import 'package:split_trip/core/common/widgets/common_social_button.dart';
 import 'package:split_trip/core/const/app_assets.dart';
 import 'package:split_trip/core/router/app_pages.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
-import 'package:split_trip/core/theme/app_color.dart';
+
 import 'package:split_trip/services/analytics/analytics_service.dart';
 import 'package:split_trip/services/auth/apple_auth_service.dart';
 import 'package:split_trip/services/auth/google_auth_service.dart';
+import 'package:split_trip/modules/Settings/controller/backup_controller.dart';
 import 'package:split_trip/modules/Settings/controller/profile_controller.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -74,6 +77,9 @@ class _LoginScreenState extends State<LoginScreen>
       if (GoogleAuthService.isSignedIn) {
         await _saveProfileDetails();
         AnalyticsService.logLogin();
+        if (Get.isRegistered<BackupController>()) {
+          Get.find<BackupController>().resetDashboardBackupCheck();
+        }
         Get.offAllNamed(AppRoutes.main);
         return;
       }
@@ -85,28 +91,41 @@ class _LoginScreenState extends State<LoginScreen>
         if (GoogleAuthService.isSignedIn) {
           await _saveProfileDetails();
           AnalyticsService.logLogin();
+          if (Get.isRegistered<BackupController>()) {
+            Get.find<BackupController>().resetDashboardBackupCheck();
+          }
           Get.offAllNamed(AppRoutes.main);
+        } else {
+          final errDetail = GoogleAuthService.lastAuthError.isNotEmpty
+              ? GoogleAuthService.lastAuthError
+              : 'Google Sign-in was not completed.';
+          AppLogger.error('Google Sign-in failed: $errDetail');
+          if (!mounted) return;
+          AppSnackbar.error(
+            message: errDetail,
+            duration: const Duration(seconds: 8),
+          );
         }
-        // else: user cancelled — do nothing, just hide loader
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      final errText = GoogleAuthService.lastAuthError.isNotEmpty
+          ? GoogleAuthService.lastAuthError
+          : 'Error: $e';
+      // ignore: avoid_print
+      print('❌ [Google Sign-in Error]: $errText');
+      // ignore: avoid_print
+      print('❌ [Stack trace]: $stackTrace');
+      AppLogger.error('Google Sign-in Error: $errText');
+      AppLogger.error('Stack trace: $stackTrace');
       if (!mounted) return;
-      Get.snackbar(
-        'Sign-in Failed',
-        e.toString(), // actual error dikhao for debugging
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.error.withValues(alpha: 0.9),
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 12,
-        duration: const Duration(seconds: 5),
+      AppSnackbar.error(
+        message: errText,
+        duration: const Duration(seconds: 10),
       );
     } finally {
       if (mounted) setState(() => _isGoogleLoading = false);
     }
   }
-
-
 
   Future<void> _handleAppleSignIn() async {
     if (_isGoogleLoading || _isAppleLoading) return;
@@ -122,16 +141,16 @@ class _LoginScreenState extends State<LoginScreen>
         Get.offAllNamed(AppRoutes.main);
         return;
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      // ignore: avoid_print
+      print('❌ [Apple Sign-in Error]: $e');
+      // ignore: avoid_print
+      print('❌ [Stack trace]: $stackTrace');
+      AppLogger.error('Apple Sign-in Error: $e');
+      AppLogger.error('Stack trace: $stackTrace');
       if (!mounted) return;
-      Get.snackbar(
-        'Sign-in Failed',
-        e.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.error.withValues(alpha: 0.9),
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 12,
+      AppSnackbar.error(
+        message: 'Apple Sign-in Failed: $e',
         duration: const Duration(seconds: 5),
       );
     } finally {

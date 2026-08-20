@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:split_trip/core/common/widgets/app_logger.dart';
 
 class AppleAuthService {
   AppleAuthService._();
@@ -80,22 +81,41 @@ class AppleAuthService {
       return userCredential;
     } on SignInWithAppleAuthorizationException catch (e) {
       if (e.code == AuthorizationErrorCode.canceled) {
+        // ignore: avoid_print
+        print('ℹ️ [AppleAuthService]: Sign in cancelled by user.');
+        AppLogger.log('Apple Sign in cancelled by user.');
         return null;
       }
+      // ignore: avoid_print
+      print('❌ [AppleAuthService.signIn Error]: $e');
+      AppLogger.error('AppleAuthService.signIn Error: $e');
       rethrow;
     } on FirebaseAuthException catch (e) {
       if (e.code == 'canceled' ||
           e.code == 'web-context-cancelled' ||
           e.code == 'user-cancelled' ||
           e.code == 'ERROR_ABORTED_BY_USER') {
+        // ignore: avoid_print
+        print('ℹ️ [AppleAuthService]: Firebase sign in cancelled by user.');
         return null;
       }
+      // ignore: avoid_print
+      print('❌ [AppleAuthService.signIn FirebaseAuthException]: $e');
+      AppLogger.error('AppleAuthService.signIn FirebaseAuthException: $e');
       rethrow;
-    } catch (e) {
+    } catch (e, stackTrace) {
       final errStr = e.toString().toLowerCase();
       if (errStr.contains('cancel') || errStr.contains('1001')) {
+        // ignore: avoid_print
+        print('ℹ️ [AppleAuthService]: Sign in cancelled by user (1001).');
         return null;
       }
+      // ignore: avoid_print
+      print('❌ [AppleAuthService.signIn Error]: $e');
+      // ignore: avoid_print
+      print('❌ [Stack trace]: $stackTrace');
+      AppLogger.error('AppleAuthService.signIn Error: $e');
+      AppLogger.error('Stack trace: $stackTrace');
       rethrow;
     }
   }

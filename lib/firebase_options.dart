@@ -56,14 +56,13 @@ class DefaultFirebaseOptions {
     projectId: 'split-trip-c2941',
     storageBucket: 'split-trip-c2941.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCTcRk6be-YWPfj4iZVpOjmJBgZceZCKAw',
     appId: '1:582158608949:ios:bc5efc1e36275ed19c1f7c',
     messagingSenderId: '582158608949',
     projectId: 'split-trip-c2941',
     storageBucket: 'split-trip-c2941.firebasestorage.app',
-    androidClientId: '582158608949-uhkn9149srdk9fh2kbci5jsdt7j69thp.apps.googleusercontent.com',
+    androidClientId: '582158608949-bu5tukjpna06ebchspad5ugtvn470poh.apps.googleusercontent.com',
     iosClientId: '582158608949-h38g652q973onj7ot6tkunh883vq6ol4.apps.googleusercontent.com',
     iosBundleId: 'app.rudara.splittrip',
   );

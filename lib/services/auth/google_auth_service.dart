@@ -3,12 +3,12 @@ import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sig
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis_auth/googleapis_auth.dart' as auth;
+import 'package:split_trip/core/common/widgets/app_logger.dart';
 import 'package:split_trip/core/const/app_string.dart';
 import 'package:split_trip/data/database/database_provider.dart';
 
 class GoogleAuthService {
   GoogleAuthService._();
-
 
   static const List<String> _scopes = <String>[
     'email',
@@ -56,26 +56,67 @@ class GoogleAuthService {
     _isInitialized = true;
   }
 
+  static String lastAuthError = "";
+
   /// Triggers the Google Sign-In interactive flow and signs into Firebase.
   /// Returns [UserCredential?] — use this for login screen.
+  ///
+  /// On Play Store builds, Google Play App Signing changes the signing
+  /// certificate. If stale credentials from a previous install (debug/old
+  /// signing cert) are cached, the Credential Manager returns error
+  /// [16] "Account reauth failed". We handle this by signing out to clear
+  /// stale credentials and retrying once with a fresh interactive flow.
   static Future<UserCredential?> signIn() async {
+    lastAuthError = "";
     if (!_isInitialized) await initialize();
 
-    // Check if already signed in to Firebase
-    if (_firebaseAuth.currentUser != null) {
-      return null; // already signed in
-    }
+    return _attemptSignIn(isRetry: false);
+  }
 
+  static Future<UserCredential?> _attemptSignIn({required bool isRetry}) async {
     try {
       _currentUser = await _googleSignIn.authenticate();
-      if (_currentUser == null) return null;
-
-      return await _signInToFirebase(_currentUser!);
-    } catch (e) {
-      if (e is GoogleSignInException &&
-          e.code == GoogleSignInExceptionCode.canceled) {
+      if (_currentUser == null) {
+        lastAuthError = "Google account selection returned null";
         return null;
       }
+
+      return await _signInToFirebase(_currentUser!);
+    } catch (e, stackTrace) {
+      // ── Stale credential retry ──────────────────────────────────────────
+      // Error [16] "Account reauth failed" happens when Google tries to
+      // silently reauth a cached credential whose signing cert no longer
+      // matches (common after Play Store install overwrites debug build).
+      // Fix: sign out to clear stale cache, then retry once with fresh UI.
+      if (!isRetry && e is GoogleSignInException &&
+          (e.description?.contains('reauth') == true ||
+           e.description?.contains('16') == true)) {
+        // ignore: avoid_print
+        print('⚠️ [GoogleAuthService]: Stale credential detected, clearing and retrying...');
+        AppLogger.error('GoogleAuthService: Stale credential, retrying after signOut');
+        try {
+          await _googleSignIn.signOut();
+          await _firebaseAuth.signOut();
+          _currentUser = null;
+        } catch (_) {}
+        return _attemptSignIn(isRetry: true);
+      }
+
+      if (e is GoogleSignInException) {
+        final desc = e.description ?? '';
+        final codeStr = e.code.toString().replaceAll('GoogleSignInExceptionCode.', '');
+        lastAuthError = 'GoogleSDK Error [$codeStr]: ${desc.isEmpty ? "No description returned" : desc}';
+      } else if (e is FirebaseAuthException) {
+        lastAuthError = 'FirebaseAuth Error [${e.code}]: ${e.message ?? e.toString()}';
+      } else {
+        lastAuthError = 'Error: $e';
+      }
+      // ignore: avoid_print
+      print('❌ [GoogleAuthService.signIn Error]: $lastAuthError');
+      AppLogger.error('GoogleAuthService.signIn Error: $lastAuthError');
+      // ignore: avoid_print
+      print('❌ [Stack trace]: $stackTrace');
+      AppLogger.error('Stack trace: $stackTrace');
       rethrow;
     }
   }
@@ -116,11 +157,19 @@ class GoogleAuthService {
       }
 
       return _currentUser;
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (e is GoogleSignInException &&
           e.code == GoogleSignInExceptionCode.canceled) {
+        // ignore: avoid_print
+        print('ℹ️ [GoogleAuthService]: Sign in for drive cancelled by user.');
         return null;
       }
+      // ignore: avoid_print
+      print('❌ [GoogleAuthService.signInForDrive Error]: $e');
+      // ignore: avoid_print
+      print('❌ [Stack trace]: $stackTrace');
+      AppLogger.error('GoogleAuthService.signInForDrive Error: $e');
+      AppLogger.error('Stack trace: $stackTrace');
       rethrow;
     }
   }
@@ -137,11 +186,16 @@ class GoogleAuthService {
         await _signInToFirebase(_currentUser!);
       }
       return _firebaseAuth.currentUser;
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (e is GoogleSignInException &&
           e.code == GoogleSignInExceptionCode.canceled) {
         return null;
       }
+      // ignore: avoid_print
+      print('❌ [GoogleAuthService.signInSilently Error]: $e');
+      // ignore: avoid_print
+      print('❌ [Stack trace]: $stackTrace');
+      AppLogger.error('GoogleAuthService.signInSilently Error: $e');
       rethrow;
     }
   }
@@ -156,11 +210,14 @@ class GoogleAuthService {
     // is missing in Firebase Console or a network/config issue.
     final idToken = googleAuth.idToken;
     if (idToken == null) {
-      throw Exception(
-        'Google idToken is null.\n'
-        'Fix: Add your debug SHA-1 fingerprint to Firebase Console.\n'
-        'Run: cd android && ./gradlew signingReport',
-      );
+      const errorMsg =
+          'Google idToken is null.\n'
+          'Fix: Add your debug SHA-1 fingerprint to Firebase Console.\n'
+          'Run: cd android && ./gradlew signingReport';
+      // ignore: avoid_print
+      print('❌ [GoogleAuthService._signInToFirebase Error]: $errorMsg');
+      AppLogger.error(errorMsg);
+      throw Exception(errorMsg);
     }
 
     // google_sign_in v7+ removed accessToken from GoogleSignInAuthentication.
@@ -177,7 +234,6 @@ class GoogleAuthService {
     _currentUser = null;
     await DatabaseProvider.switchUserDatabase(null);
   }
-
 
   /// Permanently deletes the current Firebase user account and signs out from Google.
   static Future<void> deleteUserAccount() async {

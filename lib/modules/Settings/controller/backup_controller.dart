@@ -17,6 +17,10 @@ class BackupController extends GetxController {
   final RxBool isRestoreLoading = false.obs;
   bool _hasCheckedBackupOnDashboard = false;
 
+  void resetDashboardBackupCheck() {
+    _hasCheckedBackupOnDashboard = false;
+  }
+
 
   /// Starts the Backup to Google Drive flow.
   Future<void> backupToGoogleDrive() async {

@@ -49,6 +49,9 @@ class _DashbordScreenState extends State<DashbordScreen> {
         Get.put(BackupController());
       }
       final backupController = Get.find<BackupController>();
+      
+      // Ensure Dashboard screen navigation transition is fully settled before prompt
+      await Future.delayed(const Duration(milliseconds: 400));
       await backupController.checkAndPromptRestoreOnDashboard(googleAccount);
     }
   }
