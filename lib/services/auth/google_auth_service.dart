@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis_auth/googleapis_auth.dart' as auth;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:split_trip/core/common/widgets/app_logger.dart';
 import 'package:split_trip/core/const/app_string.dart';
 import 'package:split_trip/data/database/database_provider.dart';
+import 'package:split_trip/data/service/pref_keys.dart';
 
 class GoogleAuthService {
   GoogleAuthService._();
@@ -16,21 +17,13 @@ class GoogleAuthService {
   ];
 
   static final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
-  static final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
   static GoogleSignInAccount? _currentUser;
   static bool _isInitialized = false;
 
-  /// Returns the currently signed-in Firebase user (if any).
-  static User? get firebaseUser => _firebaseAuth.currentUser;
-
-  /// Stream of Firebase auth state changes.
-  static Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
-
   /// Call this ONCE at app startup.
   static Future<void> initialize({
     String? clientId,
-    // Web Client ID from google-services.json (oauth_client with client_type: 3)
     String? serverClientId = AppString.serverClientId,
   }) async {
     if (_isInitialized) return;
@@ -40,40 +33,66 @@ class GoogleAuthService {
       serverClientId: serverClientId,
     );
 
-    // Listen for authentication events to track user session
     _googleSignIn.authenticationEvents
         .listen((event) {
           if (event is GoogleSignInAuthenticationEventSignIn) {
             _currentUser = event.user;
+            _saveUserEmailToPrefs(event.user.email);
           } else if (event is GoogleSignInAuthenticationEventSignOut) {
             _currentUser = null;
+            _saveUserEmailToPrefs(null);
           }
         })
         .onError((Object error) {
           // Handle or log auth events streams errors
         });
 
+    // Intentionally NOT calling attemptLightweightAuthentication() here.
+    // Google sign-in must only ever be triggered by an explicit user action
+    // (tapping "Backup to Google Drive" / "Restore from Google Drive"),
+    // never automatically on app start.
+    final storedEmail = await _getStoredUserEmail();
+    if (storedEmail != null && storedEmail.isNotEmpty) {
+      await DatabaseProvider.switchUserDatabase(storedEmail);
+    }
+
     _isInitialized = true;
+  }
+
+  static Future<void> _saveUserEmailToPrefs(String? email) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (email != null && email.isNotEmpty) {
+        await prefs.setString(PrefKeys.userEmail, email);
+      } else {
+        await prefs.remove(PrefKeys.userEmail);
+      }
+    } catch (_) {}
+  }
+
+  static Future<String?> _getStoredUserEmail() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(PrefKeys.userEmail);
+    } catch (_) {
+      return null;
+    }
   }
 
   static String lastAuthError = "";
 
-  /// Triggers the Google Sign-In interactive flow and signs into Firebase.
-  /// Returns [UserCredential?] — use this for login screen.
-  ///
-  /// On Play Store builds, Google Play App Signing changes the signing
-  /// certificate. If stale credentials from a previous install (debug/old
-  /// signing cert) are cached, the Credential Manager returns error
-  /// [16] "Account reauth failed". We handle this by signing out to clear
-  /// stale credentials and retrying once with a fresh interactive flow.
-  static Future<UserCredential?> signIn() async {
+  /// Triggers the Google Sign-In interactive flow.
+  /// Returns [GoogleSignInAccount?] — use this for sign-in.
+  static Future<GoogleSignInAccount?> signIn() async {
     lastAuthError = "";
     if (!_isInitialized) await initialize();
 
     return _attemptSignIn(isRetry: false);
   }
 
-  static Future<UserCredential?> _attemptSignIn({required bool isRetry}) async {
+  static Future<GoogleSignInAccount?> _attemptSignIn({
+    required bool isRetry,
+  }) async {
     try {
       _currentUser = await _googleSignIn.authenticate();
       if (_currentUser == null) {
@@ -81,33 +100,37 @@ class GoogleAuthService {
         return null;
       }
 
-      return await _signInToFirebase(_currentUser!);
+      await _saveUserEmailToPrefs(_currentUser!.email);
+      await DatabaseProvider.switchUserDatabase(_currentUser!.email);
+      return _currentUser;
     } catch (e, stackTrace) {
-      // ── Stale credential retry ──────────────────────────────────────────
-      // Error [16] "Account reauth failed" happens when Google tries to
-      // silently reauth a cached credential whose signing cert no longer
-      // matches (common after Play Store install overwrites debug build).
-      // Fix: sign out to clear stale cache, then retry once with fresh UI.
-      if (!isRetry && e is GoogleSignInException &&
+      if (!isRetry &&
+          e is GoogleSignInException &&
           (e.description?.contains('reauth') == true ||
-           e.description?.contains('16') == true)) {
+              e.description?.contains('16') == true)) {
         // ignore: avoid_print
-        print('⚠️ [GoogleAuthService]: Stale credential detected, clearing and retrying...');
-        AppLogger.error('GoogleAuthService: Stale credential, retrying after signOut');
+        print(
+          '⚠️ [GoogleAuthService]: Stale credential detected, clearing and retrying...',
+        );
+        AppLogger.error(
+          'GoogleAuthService: Stale credential, retrying after signOut',
+        );
         try {
           await _googleSignIn.signOut();
-          await _firebaseAuth.signOut();
           _currentUser = null;
+          await _saveUserEmailToPrefs(null);
         } catch (_) {}
         return _attemptSignIn(isRetry: true);
       }
 
       if (e is GoogleSignInException) {
         final desc = e.description ?? '';
-        final codeStr = e.code.toString().replaceAll('GoogleSignInExceptionCode.', '');
-        lastAuthError = 'GoogleSDK Error [$codeStr]: ${desc.isEmpty ? "No description returned" : desc}';
-      } else if (e is FirebaseAuthException) {
-        lastAuthError = 'FirebaseAuth Error [${e.code}]: ${e.message ?? e.toString()}';
+        final codeStr = e.code.toString().replaceAll(
+          'GoogleSignInExceptionCode.',
+          '',
+        );
+        lastAuthError =
+            'GoogleSDK Error [$codeStr]: ${desc.isEmpty ? "No description returned" : desc}';
       } else {
         lastAuthError = 'Error: $e';
       }
@@ -122,42 +145,65 @@ class GoogleAuthService {
   }
 
   /// Signs in with Google and returns the [GoogleSignInAccount].
-  /// Tries existing or lightweight silent session first; shows UI picker only if necessary.
+  /// Restores an existing session silently, but a user who has never signed
+  /// in through this app before always gets the explicit account picker —
+  /// never a silent auto pick of whatever account is on the device.
   static Future<GoogleSignInAccount?> signInForDrive() async {
     if (!_isInitialized) await initialize();
 
-    // 1. If already authenticated in memory, return immediately
     if (_currentUser != null) {
-      if (_firebaseAuth.currentUser == null) {
-        await _signInToFirebase(_currentUser!);
-      }
+      await _saveUserEmailToPrefs(_currentUser!.email);
+      await DatabaseProvider.switchUserDatabase(_currentUser!.email);
       return _currentUser;
     }
 
-    // 2. Try silent lightweight auth first
-    try {
-      _currentUser = await _googleSignIn.attemptLightweightAuthentication();
-      if (_currentUser != null) {
-        if (_firebaseAuth.currentUser == null) {
-          await _signInToFirebase(_currentUser!);
+    final storedEmail = await _getStoredUserEmail();
+    if (storedEmail != null && storedEmail.isNotEmpty) {
+      try {
+        _currentUser = await _googleSignIn.attemptLightweightAuthentication();
+        if (_currentUser != null) {
+          await _saveUserEmailToPrefs(_currentUser!.email);
+          await DatabaseProvider.switchUserDatabase(_currentUser!.email);
+          return _currentUser;
         }
-        return _currentUser;
+      } catch (_) {
+        // Fall through to interactive prompt
       }
-    } catch (_) {
-      // Fall through to interactive prompt if silent auth is unavailable
     }
 
-    // 3. Trigger interactive prompt if not signed in
+    return _attemptAuthenticateForDrive(isRetry: false);
+  }
+
+  static Future<GoogleSignInAccount?> _attemptAuthenticateForDrive({
+    required bool isRetry,
+  }) async {
     try {
       _currentUser = await _googleSignIn.authenticate();
       if (_currentUser == null) return null;
 
-      if (_firebaseAuth.currentUser == null) {
-        await _signInToFirebase(_currentUser!);
-      }
-
+      await _saveUserEmailToPrefs(_currentUser!.email);
+      await DatabaseProvider.switchUserDatabase(_currentUser!.email);
       return _currentUser;
     } catch (e, stackTrace) {
+      if (!isRetry &&
+          e is GoogleSignInException &&
+          (e.description?.contains('reauth') == true ||
+              e.description?.contains('16') == true)) {
+        // ignore: avoid_print
+        print(
+          '⚠️ [GoogleAuthService]: Stale credential detected (drive), clearing and retrying...',
+        );
+        AppLogger.error(
+          'GoogleAuthService: Stale credential (drive), retrying after signOut',
+        );
+        try {
+          await _googleSignIn.signOut();
+          _currentUser = null;
+          await _saveUserEmailToPrefs(null);
+        } catch (_) {}
+        return _attemptAuthenticateForDrive(isRetry: true);
+      }
+
       if (e is GoogleSignInException &&
           e.code == GoogleSignInExceptionCode.canceled) {
         // ignore: avoid_print
@@ -174,18 +220,16 @@ class GoogleAuthService {
     }
   }
 
-  /// Attempts silent (lightweight) sign-in and syncs with Firebase.
-  static Future<User?> signInSilently() async {
+  /// Attempts silent (lightweight) sign-in.
+  static Future<GoogleSignInAccount?> signInSilently() async {
     try {
       if (!_isInitialized) await initialize();
       _currentUser = await _googleSignIn.attemptLightweightAuthentication();
-      if (_currentUser == null) return null;
-
-      // Sync with Firebase if not already signed in
-      if (_firebaseAuth.currentUser == null) {
-        await _signInToFirebase(_currentUser!);
+      if (_currentUser != null) {
+        await _saveUserEmailToPrefs(_currentUser!.email);
+        await DatabaseProvider.switchUserDatabase(_currentUser!.email);
       }
-      return _firebaseAuth.currentUser;
+      return _currentUser;
     } catch (e, stackTrace) {
       if (e is GoogleSignInException &&
           e.code == GoogleSignInExceptionCode.canceled) {
@@ -200,68 +244,24 @@ class GoogleAuthService {
     }
   }
 
-  /// Internal: use Google credentials to sign into Firebase Auth.
-  static Future<UserCredential> _signInToFirebase(
-    GoogleSignInAccount googleUser,
-  ) async {
-    final googleAuth = googleUser.authentication;
-
-    // idToken should always be present — if null, likely SHA-1 fingerprint
-    // is missing in Firebase Console or a network/config issue.
-    final idToken = googleAuth.idToken;
-    if (idToken == null) {
-      const errorMsg =
-          'Google idToken is null.\n'
-          'Fix: Add your debug SHA-1 fingerprint to Firebase Console.\n'
-          'Run: cd android && ./gradlew signingReport';
-      // ignore: avoid_print
-      print('❌ [GoogleAuthService._signInToFirebase Error]: $errorMsg');
-      AppLogger.error(errorMsg);
-      throw Exception(errorMsg);
-    }
-
-    // google_sign_in v7+ removed accessToken from GoogleSignInAuthentication.
-    // idToken alone is sufficient for Firebase Google sign-in.
-    final credential = GoogleAuthProvider.credential(idToken: idToken);
-    final userCredential = await _firebaseAuth.signInWithCredential(credential);
-    await DatabaseProvider.switchUserDatabase(googleUser.email);
-    return userCredential;
-  }
-
-  /// Signs out from both Google and Firebase.
+  /// Signs out from Google.
   static Future<void> signOut() async {
-    await Future.wait([_googleSignIn.signOut(), _firebaseAuth.signOut()]);
+    await _googleSignIn.signOut();
     _currentUser = null;
+    await _saveUserEmailToPrefs(null);
     await DatabaseProvider.switchUserDatabase(null);
   }
 
-  /// Permanently deletes the current Firebase user account and signs out from Google.
+  /// Permanently disconnects the Google account and signs out.
   static Future<void> deleteUserAccount() async {
-    final user = _firebaseAuth.currentUser;
-    if (user != null) {
-      try {
-        await user.delete();
-      } on FirebaseAuthException catch (e) {
-        if (e.code == 'requires-recent-login') {
-          final googleUser = await _googleSignIn.authenticate();
-          final googleAuth = googleUser.authentication;
-          final credential = GoogleAuthProvider.credential(
-            idToken: googleAuth.idToken,
-          );
-          await user.reauthenticateWithCredential(credential);
-          await user.delete();
-        } else {
-          rethrow;
-        }
-      }
+    try {
+      await _googleSignIn.disconnect();
+    } catch (_) {
+      await _googleSignIn.signOut();
     }
-    await signOut();
-  }
-
-  /// Returns the current signed-in Google account (checks Firebase first).
-  static Future<GoogleSignInAccount?> getCurrentGoogleUser() async {
-    if (_currentUser != null) return _currentUser;
-    return null;
+    _currentUser = null;
+    await _saveUserEmailToPrefs(null);
+    await DatabaseProvider.switchUserDatabase(null);
   }
 
   /// Attempts silent lightweight authentication and returns [GoogleSignInAccount?] without prompting user UI.
@@ -270,17 +270,24 @@ class GoogleAuthService {
     try {
       if (!_isInitialized) await initialize();
       _currentUser = await _googleSignIn.attemptLightweightAuthentication();
+      if (_currentUser != null) {
+        await _saveUserEmailToPrefs(_currentUser!.email);
+        await DatabaseProvider.switchUserDatabase(_currentUser!.email);
+      }
       return _currentUser;
     } catch (_) {
       return null;
     }
   }
 
-  /// Returns true if user is currently signed in to Firebase.
-  static bool get isSignedIn => _firebaseAuth.currentUser != null;
+  /// Returns true if user is currently signed in to Google.
+  static bool get isSignedIn => _currentUser != null;
+
+  /// Returns the cached signed-in account, if any, without ever triggering
+  /// a sign-in attempt (no network/UI). Safe to call on app startup.
+  static GoogleSignInAccount? get currentUser => _currentUser;
 
   /// Generates a Google APIs client authenticated with the user's Google Sign-In credentials.
-  /// Set [allowInteractive] to false during background/auto-backup operations to prevent UI popups on app launch.
   static Future<auth.AuthClient?> getAuthenticatedClient({
     bool allowInteractive = true,
   }) async {

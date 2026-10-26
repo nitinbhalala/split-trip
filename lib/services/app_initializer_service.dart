@@ -9,6 +9,7 @@ import 'package:split_trip/modules/Settings/controller/currency_controller.dart'
 import 'package:split_trip/data/service/shared_preferences_service.dart';
 import 'package:split_trip/firebase_options.dart';
 import 'package:split_trip/services/analytics/analytics_service.dart';
+import 'package:split_trip/services/auth/google_auth_service.dart';
 
 class AppInitializerService {
   AppInitializerService._();
@@ -47,12 +48,11 @@ class AppInitializerService {
         );
       },
     );
+
     await _initializeStep(
-      name: "Firebase",
+      name: "Google Auth Service",
       action: () async {
-        await Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform,
-        );
+        await GoogleAuthService.initialize();
       },
     );
 

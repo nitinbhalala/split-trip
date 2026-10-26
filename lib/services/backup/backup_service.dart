@@ -98,8 +98,8 @@ class BackupService {
       await GoogleDriveService.uploadOrReplaceFile(
         client: client,
         bytes: gzipBytes,
-        fileName: 'expense_backup.gz',
-        folderName: 'Expense Tracker',
+        fileName: 'Split_trip.gz',
+        folderName: 'Split_trip',
         appProperties: metadata,
       );
 

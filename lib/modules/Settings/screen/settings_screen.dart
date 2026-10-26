@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:split_trip/core/common/divider/app_divider.dart';
-import 'package:split_trip/core/common/widgets/app_card.dart';
 import 'package:split_trip/core/common/widgets/common_app_bar.dart';
 import 'package:split_trip/core/const/app_string.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
@@ -12,11 +11,6 @@ import 'package:split_trip/modules/Settings/controller/backup_controller.dart';
 import 'package:split_trip/modules/Settings/controller/currency_controller.dart';
 import 'package:split_trip/modules/Settings/controller/profile_controller.dart';
 import 'package:split_trip/core/router/app_pages.dart';
-import 'package:split_trip/data/database/database_helper.dart';
-import 'package:split_trip/data/database/db_constants.dart';
-import 'package:split_trip/core/common/dailog/common_general_dialog.dart';
-import 'package:split_trip/core/common/widgets/app_snackbar.dart';
-import 'package:split_trip/data/service/shared_preferences_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -30,7 +24,6 @@ class SettingsScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final currencyController = Get.find<CurrencyController>();
     final themeController = Get.find<ThemeController>();
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: const CommonAppBar(title: "Settings", showBackButton: false),
@@ -163,6 +156,30 @@ class SettingsScreen extends StatelessWidget {
                     backupController.restoreFromGoogleDrive();
                   },
                 ),
+                Obx(() {
+                  final profileController = Get.find<ProfileController>();
+                  final profileEmail = profileController.email.value.trim();
+                  final hasBackupEmail =
+                      GoogleAuthService.isSignedIn || profileEmail.isNotEmpty;
+                  if (!hasBackupEmail) return const SizedBox.shrink();
+
+                  return Column(
+                    children: [
+                      AppDivider(color: theme.colorScheme.outlineVariant),
+                      _SettingsTile(
+                        icon: Icons.delete_sweep_outlined,
+                        iconColor: AppColors.error,
+                        delete: true,
+                        title: "Delete Backup Data",
+                        subtitle: "Delete backup file from Google Drive",
+                        onTap: () {
+                          final backupController = Get.find<BackupController>();
+                          backupController.deleteBackupFromGoogleDrive(context);
+                        },
+                      ),
+                    ],
+                  );
+                }),
               ],
             ),
             AppSize.gapH(20),
@@ -216,16 +233,6 @@ class SettingsScreen extends StatelessWidget {
                   },
                 ),
                 AppDivider(color: theme.colorScheme.outlineVariant),
-                // _SettingsTile(
-                //   icon: Icons.logout_rounded,
-                //   iconColor: Colors.red,
-                //   title: "Logout",
-                //   subtitle: "Sign out of your account",
-                //   onTap: () {
-                //     _showLogoutConfirmationDialog(context);
-                //   },
-                // ),
-                AppDivider(color: theme.colorScheme.outlineVariant),
                 FutureBuilder<PackageInfo>(
                   future: PackageInfo.fromPlatform(),
                   builder: (context, snapshot) {
@@ -248,49 +255,6 @@ class SettingsScreen extends StatelessWidget {
                     );
                   },
                 ),
-                AppDivider(color: theme.colorScheme.outlineVariant),
-                _SettingsTile(
-                  icon: Icons.delete_forever_rounded,
-                  iconColor: AppColors.error,
-                  delete: true,
-                  title: "Account Delete",
-                  subtitle: "Delete your account permanently",
-                  onTap: () {
-                    _showDeleteAccountConfirmationDialog(context);
-                  },
-                ),
-                AppSize.gapH(15),
-
-                AppCard(
-                  boxShadow: true,
-                  borderColor: isDark
-                      ? AppColors.error.withValues(alpha: 0.5)
-                      : AppColors.error.withValues(alpha: 0.3),
-                  padding: AppSize.symmetric(horizontal: 6, vertical: 6),
-                  height: AppSize.h(45),
-                  width: AppSize.w(250),
-                  color: theme.scaffoldBackgroundColor,
-                  onTap: () => _showLogoutConfirmationDialog(context),
-                  child: Row(
-                    mainAxisAlignment: .center,
-                    children: [
-                      Icon(
-                        Icons.logout_rounded,
-                        color: AppColors.error,
-                        size: AppSize.sp(18),
-                      ),
-                      AppSize.gapW(10),
-                      Text(
-                        "Logout",
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: AppColors.error,
-                          fontSize: AppSize.sp(15),
-                          letterSpacing: AppSize.sp(1),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
                 AppSize.gapH(5),
               ],
             ),
@@ -300,104 +264,6 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  void _showLogoutConfirmationDialog(BuildContext context) async {
-    final confirmed = await showAppConfirmationDialog(
-      context: context,
-      messageAlign: TextAlign.center,
-      title: "Logout",
-      message:
-          "Are you sure you want to sign out of your account? Please ensure you have performed your daily backup before logging out.",
-      confirmText: "Logout",
-      messageColor: Theme.of(context).colorScheme.onSurface,
-      cancelText: "Cancel",
-      isDeleteAction: true,
-      icon: Icons.logout_rounded,
-    );
-
-    if (confirmed == true) {
-      // Sign out from both Google and Firebase
-      await GoogleAuthService.signOut();
-
-      // Clear all SQLite DB tables for complete local data cleanup
-      final db = DatabaseHelper.instance;
-      await db.clearTable(DBConstants.profileTable);
-      await db.clearTable(DBConstants.categoriesTable);
-
-      // Reset profile controller observables
-      final profileController = Get.find<ProfileController>();
-      profileController.firstName.value = "";
-      profileController.lastName.value = "";
-      profileController.email.value = "";
-      profileController.profilePicture.value = "";
-
-      // Navigate back to login screen
-      Get.offAllNamed(AppRoutes.login);
-    }
-  }
-
-  void _showDeleteAccountConfirmationDialog(BuildContext context) async {
-    final confirmed = await showAppConfirmationDialog(
-      context: context,
-      messageAlign: TextAlign.center,
-      title: "Delete Account",
-      message:
-          "Are you sure you want to delete your account permanently?\n\nThis action cannot be undone. All your profile information, accounts, categories, and transaction history will be permanently deleted from this device and Firebase.",
-      confirmText: "Delete Account",
-      cancelText: "Cancel",
-      isDeleteAction: true,
-      icon: Icons.delete_forever_rounded,
-    );
-
-    if (confirmed == true) {
-      // 1. Show loader overlay dialog
-      Get.dialog(
-        const PopScope(
-          canPop: false,
-          child: Center(child: CircularProgressIndicator()),
-        ),
-        barrierDismissible: false,
-      );
-
-      try {
-        // 2. Permanently delete Firebase user account & sign out
-        await GoogleAuthService.deleteUserAccount();
-
-        // 3. Clear all local SQLite database tables
-        final db = DatabaseHelper.instance;
-        await db.clearTable(DBConstants.profileTable);
-        await db.clearTable(DBConstants.categoriesTable);
-
-        // 4. Clear SharedPreferences
-        if (Get.isRegistered<SharedPreferencesService>()) {
-          await Get.find<SharedPreferencesService>().clear();
-        }
-
-        // 5. Reset ProfileController state
-        if (Get.isRegistered<ProfileController>()) {
-          final profileController = Get.find<ProfileController>();
-          profileController.firstName.value = "";
-          profileController.lastName.value = "";
-          profileController.email.value = "";
-          profileController.profilePicture.value = "";
-        }
-
-        // 6. Dismiss loader dialog
-        if (Get.isDialogOpen == true) {
-          Get.back();
-        }
-
-        AppSnackbar.success(message: "Account deleted successfully.");
-
-        // 7. Navigate back to login screen
-        Get.offAllNamed(AppRoutes.login);
-      } catch (e) {
-        if (Get.isDialogOpen == true) {
-          Get.back();
-        }
-        AppSnackbar.error(message: "Failed to delete account: $e");
-      }
-    }
-  }
 }
 
 class _ProfileHeader extends StatelessWidget {
@@ -473,7 +339,7 @@ class _ProfileHeader extends StatelessWidget {
             Text(
               (profileController.firstName.value.trim().isEmpty &&
                       profileController.lastName.value.trim().isEmpty)
-                  ? "Guest"
+                  ? (GoogleAuthService.isSignedIn ? "User" : "Guest User")
                   : "${profileController.firstName.value} ${profileController.lastName.value}"
                         .trim(),
               style: theme.textTheme.labelLarge,
@@ -481,7 +347,9 @@ class _ProfileHeader extends StatelessWidget {
             AppSize.gapH(4),
             Text(
               profileController.email.value.trim().isEmpty
-                  ? "Tap to complete profile "
+                  ? (GoogleAuthService.isSignedIn
+                        ? "Tap to edit profile"
+                        : "Guest Account • Tap to edit or sign in")
                   : profileController.email.value,
               style: theme.textTheme.bodySmall,
             ),

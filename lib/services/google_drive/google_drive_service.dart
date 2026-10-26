@@ -122,5 +122,39 @@ class GoogleDriveService {
       return false;
     }
   }
+
+  /// Deletes the backup file from Google Drive inside the specified folder.
+  static Future<bool> deleteBackupFile({
+    required AuthClient client,
+    required String fileName,
+    required String folderName,
+  }) async {
+    try {
+      final driveApi = drive.DriveApi(client);
+      final folderQuery = "name = '$folderName' and mimeType = '$_folderMimeType' and trashed = false";
+      final folderList = await driveApi.files.list(q: folderQuery, spaces: 'drive');
+
+      if (folderList.files == null || folderList.files!.isEmpty) {
+        return false;
+      }
+
+      final folderId = folderList.files!.first.id!;
+      final fileQuery = "name = '$fileName' and '$folderId' in parents and trashed = false";
+      final fileList = await driveApi.files.list(q: fileQuery, spaces: 'drive');
+
+      if (fileList.files == null || fileList.files!.isEmpty) {
+        return false;
+      }
+
+      for (final file in fileList.files!) {
+        if (file.id != null) {
+          await driveApi.files.delete(file.id!);
+        }
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 }
 

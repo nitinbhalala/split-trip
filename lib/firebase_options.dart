@@ -62,7 +62,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '582158608949',
     projectId: 'split-trip-c2941',
     storageBucket: 'split-trip-c2941.firebasestorage.app',
-    androidClientId: '582158608949-bu5tukjpna06ebchspad5ugtvn470poh.apps.googleusercontent.com',
+    androidClientId: '582158608949-j8bl6h4rbno60vsje0j3jluoiagse5dg.apps.googleusercontent.com',
     iosClientId: '582158608949-h38g652q973onj7ot6tkunh883vq6ol4.apps.googleusercontent.com',
     iosBundleId: 'app.rudara.splittrip',
   );

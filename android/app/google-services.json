@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "582158608949-bu5tukjpna06ebchspad5ugtvn470poh.apps.googleusercontent.com",
+          "client_id": "582158608949-j8bl6h4rbno60vsje0j3jluoiagse5dg.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "app.rudara.splittrip",
-            "certificate_hash": "883f28f03f23906806723770bd60758f21b5b020"
+            "certificate_hash": "a69c785dfa0dfd228493ce5cd1f899f8198021cd"
           }
         },
         {
@@ -27,6 +27,14 @@
           "android_info": {
             "package_name": "app.rudara.splittrip",
             "certificate_hash": "f2da62cfcbe88e6d603afe3b2665335e8987bf72"
+          }
+        },
+        {
+          "client_id": "582158608949-p6nef00rmmef7gg696d1ose7e6hmdgeq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.rudara.splittrip",
+            "certificate_hash": "3262b81d2ba7f167d8841fe42062497e20772b60"
           }
         },
         {

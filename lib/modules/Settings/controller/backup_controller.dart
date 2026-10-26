@@ -1,3 +1,4 @@
+import 'package:split_trip/core/common/dailog/common_general_dialog.dart';
 import 'package:split_trip/core/common/widgets/app_alert_dialog.dart';
 import 'package:split_trip/core/common/widgets/app_logger.dart';
 import 'package:split_trip/core/common/widgets/app_snackbar.dart';
@@ -5,6 +6,9 @@ import 'package:split_trip/core/router/app_pages.dart';
 import 'package:split_trip/services/auth/google_auth_service.dart';
 import 'package:split_trip/services/backup/backup_service.dart';
 import 'package:split_trip/services/backup/restore_service.dart';
+import 'package:split_trip/services/google_drive/google_drive_service.dart';
+import 'package:split_trip/data/database/database_helper.dart';
+import 'package:split_trip/data/database/db_constants.dart';
 import 'package:split_trip/modules/Group/controller/group_controller.dart';
 import 'package:split_trip/modules/Settings/controller/profile_controller.dart';
 import 'package:flutter/material.dart';
@@ -15,11 +19,6 @@ import 'package:split_trip/services/analytics/analytics_service.dart';
 class BackupController extends GetxController {
   final RxBool isBackupLoading = false.obs;
   final RxBool isRestoreLoading = false.obs;
-  bool _hasCheckedBackupOnDashboard = false;
-
-  void resetDashboardBackupCheck() {
-    _hasCheckedBackupOnDashboard = false;
-  }
 
 
   /// Starts the Backup to Google Drive flow.
@@ -31,30 +30,7 @@ class BackupController extends GetxController {
     }
     isBackupLoading.value = true;
 
-    // 1. Verify Profile Completeness (No loader shown)
-    final profileController = Get.find<ProfileController>();
-    var email = profileController.email.value.trim();
-
-    if (email.isEmpty) {
-      final fbUser = GoogleAuthService.firebaseUser;
-      if (fbUser?.email != null && fbUser!.email!.isNotEmpty) {
-        email = fbUser.email!.trim();
-        await profileController.saveProfile(
-          fName: profileController.firstName.value,
-          lName: profileController.lastName.value,
-          emailVal: email,
-          profilePicPath: profileController.profilePicture.value,
-        );
-      }
-    }
-
-    if (email.isEmpty) {
-      _showIncompleteProfileDialog();
-      isBackupLoading.value = false;
-      return;
-    }
-
-    // 2. Perform Google Sign-In first (No loader shown, Google selector sheet opens cleanly)
+    // 1. Perform Google Sign-In first (Prompts sign-in sheet if guest user)
     GoogleSignInAccount? account;
     try {
       account = await GoogleAuthService.signInForDrive();
@@ -65,13 +41,82 @@ class BackupController extends GetxController {
       return;
     }
 
-    if (account == null) {
-      AppSnackbar.error(message: "Google Sign-In cancelled.");
+    if (account == null || !GoogleAuthService.isSignedIn) {
+      AppSnackbar.warning(
+        message: "Google Sign-In is required to backup data to Google Drive.",
+      );
       isBackupLoading.value = false;
       return;
     }
 
-    // 3. NOW show the loader dialog while we perform background export and upload operations
+    // 2. Guard against silently overwriting an existing Drive backup:
+    // if this device's local data is empty but a backup already exists for
+    // this account (e.g. fresh install / cleared app data), let the user
+    // choose to restore it instead of pushing an empty backup over it.
+    final isLocalEmpty = await RestoreService.isLocalDatabaseEmpty();
+    if (isLocalEmpty) {
+      final hasExistingBackup = await RestoreService.hasBackup(account);
+      if (hasExistingBackup) {
+        final wantsRestore = await AppAlertDialog.show<bool>(
+          titleText: "Restore Backup Found",
+          contentText:
+              "We found an existing data backup associated with ${account.email} on Google Drive.\n\n"
+              "Would you like to restore your previous expenses and groups instead of creating a new empty backup?",
+          barrierDismissible: false,
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(result: false),
+              child: const Text("Continue Backup"),
+            ),
+            ElevatedButton(
+              onPressed: () => Get.back(result: true),
+              child: const Text("Restore Data"),
+            ),
+          ],
+        );
+
+        // Back press / system dismissal returns null — treat that as an
+        // explicit cancel of the whole backup flow, not as "Continue Backup".
+        if (wantsRestore == null) {
+          isBackupLoading.value = false;
+          return;
+        }
+
+        if (wantsRestore == true) {
+          isBackupLoading.value = false;
+          await _executeRestoreForAccount(account);
+          return;
+        }
+      }
+    }
+
+    // 3. Sync Profile details with Google account if local email is empty
+    final profileController = Get.find<ProfileController>();
+    var email = profileController.email.value.trim();
+
+    if (email.isEmpty) {
+      email = account.email.trim();
+      final displayName = account.displayName ?? "";
+      String fName = profileController.firstName.value.trim();
+      String lName = profileController.lastName.value.trim();
+
+      if (fName.isEmpty && displayName.isNotEmpty) {
+        final parts = displayName.split(" ");
+        fName = parts.first;
+        if (parts.length > 1) {
+          lName = parts.sublist(1).join(" ");
+        }
+      }
+
+      await profileController.saveProfile(
+        fName: fName.isNotEmpty ? fName : "User",
+        lName: lName,
+        emailVal: email,
+        profilePicPath: profileController.profilePicture.value,
+      );
+    }
+
+    // 4. NOW show the loader dialog while we perform background export and upload operations
     _showLoaderDialog("Backing up data...");
 
     try {
@@ -153,8 +198,10 @@ class BackupController extends GetxController {
       return;
     }
 
-    if (account == null) {
-      AppSnackbar.error(message: "Google Sign-In cancelled.");
+    if (account == null || !GoogleAuthService.isSignedIn) {
+      AppSnackbar.warning(
+        message: "Google Sign-In is required to restore data from Google Drive.",
+      );
       isRestoreLoading.value = false;
       return;
     }
@@ -259,7 +306,11 @@ class BackupController extends GetxController {
     );
   }
 
-  void _showEmailMismatchDialog(String message, {required bool isBackup}) {
+  void _showEmailMismatchDialog(
+    String message, {
+    required bool isBackup,
+    VoidCallback? onSwitchAccount,
+  }) {
     AppAlertDialog.show(
       titleText: "Email Mismatch",
       contentText:
@@ -277,7 +328,9 @@ class BackupController extends GetxController {
             await _hideLoaderDialog();
 
             // Re-trigger the flow with interactive sign-in
-            if (isBackup) {
+            if (onSwitchAccount != null) {
+              onSwitchAccount();
+            } else if (isBackup) {
               backupToGoogleDrive();
             } else {
               _executeRestore();
@@ -297,43 +350,6 @@ class BackupController extends GetxController {
         ElevatedButton(onPressed: () => Get.back(), child: const Text("OK")),
       ],
     );
-  }
-
-  /// Checks if local database is empty and a backup exists on Google Drive, and prompts user to restore on Dashboard screen.
-  Future<void> checkAndPromptRestoreOnDashboard(GoogleSignInAccount account) async {
-    if (_hasCheckedBackupOnDashboard) return;
-    _hasCheckedBackupOnDashboard = true;
-
-    try {
-      final isEmpty = await RestoreService.isLocalDatabaseEmpty();
-      if (!isEmpty) return;
-
-      final hasBackup = await RestoreService.hasBackup(account);
-      if (!hasBackup) return;
-
-      // Show popup dialog on Dashboard Screen
-      AppAlertDialog.show(
-        titleText: "Restore Backup Found",
-        contentText:
-            "We found an existing data backup associated with ${account.email} on Google Drive.\n\n"
-            "Would you like to restore your previous expenses and groups now?",
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text("Skip"),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Get.back();
-              await _executeRestoreForAccount(account);
-            },
-            child: const Text("Restore Data"),
-          ),
-        ],
-      );
-    } catch (e) {
-      AppLogger.error("Failed checking backup on dashboard: $e");
-    }
   }
 
   Future<void> _executeRestoreForAccount(GoogleSignInAccount account) async {
@@ -369,6 +385,117 @@ class BackupController extends GetxController {
       AppSnackbar.error(message: "Restore failed: $e");
     } finally {
       isRestoreLoading.value = false;
+    }
+  }
+
+  /// Deletes the backup file from Google Drive after confirmation.
+  Future<void> deleteBackupFromGoogleDrive(BuildContext context) async {
+    if (isBackupLoading.value ||
+        isRestoreLoading.value ||
+        Get.isDialogOpen == true) {
+      return;
+    }
+
+    // 1. Sign in first so we know exactly which account's backup is about
+    // to be deleted, instead of asking a generic confirmation up front.
+    GoogleSignInAccount? account;
+    try {
+      account = await GoogleAuthService.signInForDrive();
+    } catch (e) {
+      AppSnackbar.error(message: "Google Sign-In failed: $e");
+      return;
+    }
+
+    if (account == null || !GoogleAuthService.isSignedIn) {
+      AppSnackbar.warning(
+        message:
+            "Google Sign-In is required to delete backup data from Google Drive.",
+      );
+      return;
+    }
+
+    // 2. If a Profile email was already set (i.e. a backup was taken
+    // before), it must match the signed-in Google account so we never
+    // delete a different account's backup by mistake.
+    final profileController = Get.find<ProfileController>();
+    final profileEmail = profileController.email.value.trim();
+    final googleEmail = account.email.trim();
+
+    if (profileEmail.isNotEmpty &&
+        profileEmail.toLowerCase() != googleEmail.toLowerCase()) {
+      _showEmailMismatchDialog(
+        "Google account email does not match your Profile email.\n\n"
+        "Google: $googleEmail\n"
+        "Profile: $profileEmail",
+        isBackup: false,
+        onSwitchAccount: () => deleteBackupFromGoogleDrive(context),
+      );
+      return;
+    }
+
+    // 3. Confirm with the exact account email whose backup will be removed
+    // (defaults to the already-set Profile email whenever one exists).
+    if (!context.mounted) return;
+    final confirmed = await showAppConfirmationDialog(
+      context: context,
+      title: "Delete Backup Data",
+      message:
+          "Are you sure you want to delete the backup data for $googleEmail from Google Drive?\n\n"
+          "This will permanently delete your backup file ('Split_trip.gz') from Google Drive AND clear your expenses/groups stored locally on this device. This action cannot be undone.",
+      confirmText: "Delete Backup",
+      cancelText: "Cancel",
+      isDeleteAction: true,
+      icon: Icons.delete_forever_rounded,
+    );
+
+    if (confirmed != true) return;
+
+    _showLoaderDialog("Deleting backup from Google Drive...");
+
+    try {
+      final client = await GoogleAuthService.getAuthenticatedClient();
+      if (client == null) {
+        await _hideLoaderDialog();
+        AppSnackbar.error(
+          message: "Failed to get Google API authenticated client.",
+        );
+        return;
+      }
+
+      final deleted = await GoogleDriveService.deleteBackupFile(
+        client: client,
+        fileName: 'Split_trip.gz',
+        folderName: 'Split_trip',
+      );
+
+      // Also clear the expenses/groups stored locally on this device, so
+      // "Delete Backup Data" removes both the cloud copy and the local copy.
+      final db = DatabaseHelper.instance;
+      await db.clearTable(DBConstants.groupMessagesTable);
+      await db.clearTable(DBConstants.groupMembersTable);
+      await db.clearTable(DBConstants.groupsTable);
+
+      if (Get.isRegistered<GroupController>()) {
+        await Get.find<GroupController>().loadGroups();
+      }
+
+      await _hideLoaderDialog();
+
+      if (deleted) {
+        AppSnackbar.success(
+          message:
+              "Backup data deleted from Google Drive and cleared from this device.",
+        );
+      } else {
+        AppSnackbar.warning(
+          message:
+              "No backup file found on Google Drive. Local data on this device has been cleared.",
+        );
+      }
+    } catch (e) {
+      await _hideLoaderDialog();
+      AppLogger.error(useDebug: true, "Failed to delete backup: $e");
+      AppSnackbar.error(message: "Failed to delete backup: $e");
     }
   }
 }

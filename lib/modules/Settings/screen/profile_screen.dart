@@ -8,7 +8,6 @@ import 'package:split_trip/core/common/widgets/app_snackbar.dart';
 import 'package:split_trip/core/common/helper/app_validation_helper.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
 import 'package:split_trip/core/theme/app_color.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:split_trip/data/service/image_picker_service.dart';
@@ -226,13 +225,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               final emailToSave =
                                   _emailController.text.trim().isNotEmpty
                                   ? _emailController.text.trim()
-                                  : (_controller.email.value.trim().isNotEmpty
-                                        ? _controller.email.value.trim()
-                                        : (FirebaseAuth
-                                                  .instance
-                                                  .currentUser
-                                                  ?.email ??
-                                              ""));
+                                  : _controller.email.value.trim();
 
                               final success = await _controller.saveProfile(
                                 fName: _firstNameController.text,

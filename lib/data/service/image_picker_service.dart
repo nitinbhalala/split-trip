@@ -99,32 +99,36 @@ class ImagePickerService {
     return pick(source: source);
   }
 
-  static Future<bool> _requestPermission(ImageSource source) async {
-    // Gallery selection uses System Photo Picker (No storage/media permissions needed)
-    if (source == ImageSource.gallery) {
-      return true;
-    }
-
-    // Camera selection requires Camera Permission
-    if (source == ImageSource.camera) {
-      final status = await Permission.camera.request();
-      if (status.isGranted || status.isLimited) {
-        return true;
-      }
-
-      if (status.isPermanentlyDenied) {
-        await _showSettingsDialog(
-          title: 'Camera Access Required',
-          message:
-              'Camera permission is required to take a photo. Please enable it in Settings.',
-        );
-      }
-      return false;
-    }
-
+static Future<bool> _requestPermission(ImageSource source) async {
+  // Gallery:
+  // Android par System Photo Picker use thay che,
+  // etle storage/photo permission request karvani nathi.
+  if (source == ImageSource.gallery) {
     return true;
   }
 
+  // Camera:
+  // Only CAMERA permission required.
+  if (source == ImageSource.camera) {
+    final status = await Permission.camera.request();
+
+    if (status.isGranted || status.isLimited) {
+      return true;
+    }
+
+    if (status.isPermanentlyDenied) {
+      await _showSettingsDialog(
+        title: 'Camera Access Required',
+        message:
+            'Camera permission is required to take a photo. Please enable it in Settings.',
+      );
+    }
+
+    return false;
+  }
+
+  return true;
+}  
   // ── Settings redirect dialog ───────────────────────────────────────────────
 
   static Future<void> _showSettingsDialog({

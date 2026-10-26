@@ -67,8 +67,8 @@ class RestoreService {
       // 2. Download backup
       final gzipBytes = await GoogleDriveService.downloadFile(
         client: client,
-        fileName: 'expense_backup.gz',
-        folderName: 'Expense Tracker',
+        fileName: 'Split_trip.gz',
+        folderName: 'Split_trip',
       );
 
       if (gzipBytes == null || gzipBytes.isEmpty) {
@@ -121,8 +121,8 @@ class RestoreService {
 
       return await GoogleDriveService.checkFileExists(
         client: client,
-        fileName: 'expense_backup.gz',
-        folderName: 'Expense Tracker',
+        fileName: 'Split_trip.gz',
+        folderName: 'Split_trip',
       );
     } catch (_) {
       return false;

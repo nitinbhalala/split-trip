@@ -2,11 +2,10 @@ import 'package:split_trip/core/const/app_assets.dart';
 import 'package:split_trip/core/router/app_pages.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
 import 'package:split_trip/core/theme/app_color.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:split_trip/modules/Settings/controller/profile_controller.dart';
-import 'package:split_trip/services/auth/google_auth_service.dart';
+import 'package:split_trip/data/service/pref_keys.dart';
+import 'package:split_trip/data/service/shared_preferences_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -78,46 +77,21 @@ class _SplashScreenState extends State<SplashScreen>
     });
   }
 
-  /// Check if user is signed in via Firebase and navigate accordingly.
+  /// Navigate straight from splash based only on first-launch state.
+  /// Google sign-in is never touched here — it only ever runs when the user
+  /// explicitly taps "Backup to Google Drive" / "Restore from Google Drive".
   Future<void> _navigateBasedOnAuth() async {
     if (!mounted) return;
 
-    if (GoogleAuthService.isSignedIn) {
-      // Sync profile details in local database
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        if (!Get.isRegistered<ProfileController>()) {
-          Get.put(ProfileController());
-        }
-        final profileController = Get.find<ProfileController>();
-        final emailVal = user.email ?? "";
-        final displayName = user.displayName ?? "";
-        String fName = "";
-        String lName = "";
-        if (displayName.isNotEmpty) {
-          final parts = displayName.split(" ");
-          fName = parts.first;
-          if (parts.length > 1) {
-            lName = parts.sublist(1).join(" ");
-          }
-        }
-        await profileController.saveProfile(
-          fName: profileController.firstName.value.isNotEmpty
-              ? profileController.firstName.value
-              : fName,
-          lName: profileController.lastName.value.isNotEmpty
-              ? profileController.lastName.value
-              : lName,
-          emailVal: emailVal,
-          profilePicPath: profileController.profilePicture.value,
-        );
-      }
+    final prefs = Get.isRegistered<SharedPreferencesService>()
+        ? Get.find<SharedPreferencesService>()
+        : await Get.putAsync(() => SharedPreferencesService().init());
+    final isFirstTime = prefs.getBool(PrefKeys.isFirstTime, defaultValue: true);
 
-      // User already logged in → go to main screen
-      Get.offAllNamed(AppRoutes.main);
-    } else {
-      // Not logged in → go to onboarding screen
+    if (isFirstTime) {
       Get.offAllNamed(AppRoutes.onboarding);
+    } else {
+      Get.offAllNamed(AppRoutes.main);
     }
   }
 

@@ -6,6 +6,8 @@ import 'package:split_trip/core/const/app_assets.dart';
 import 'package:split_trip/core/router/app_pages.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
 import 'package:split_trip/core/theme/app_color.dart';
+import 'package:split_trip/data/service/pref_keys.dart';
+import 'package:split_trip/data/service/shared_preferences_service.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -43,8 +45,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
+  void _finishOnboarding() async {
+    if (Get.isRegistered<SharedPreferencesService>()) {
+      await Get.find<SharedPreferencesService>().setBool(PrefKeys.isFirstTime, false);
+    }
+    Get.offAllNamed(AppRoutes.main);
+  }
+
   void _onSkip() {
-    Get.offAllNamed(AppRoutes.login);
+    _finishOnboarding();
   }
 
   void _onNext() {
@@ -54,7 +63,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      Get.offAllNamed(AppRoutes.login);
+      _finishOnboarding();
     }
   }
 

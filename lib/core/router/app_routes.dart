@@ -9,7 +9,6 @@ import 'package:split_trip/modules/Settings/screen/profile_screen.dart';
 import 'package:split_trip/modules/Settings/screen/theme_selection_screen.dart';
 import 'package:split_trip/modules/Onboarding/screen/onboarding_screen.dart';
 import 'package:split_trip/modules/Splash/splash_screen.dart';
-import 'package:split_trip/modules/auth/login_screen.dart';
 
 import 'package:split_trip/data/model/group_model.dart';
 import 'package:split_trip/data/model/group_message_model.dart';
@@ -28,7 +27,6 @@ class AppPages {
   static final pages = <GetPage>[
     GetPage(name: AppRoutes.splash, page: () => const SplashScreen()),
     GetPage(name: AppRoutes.onboarding, page: () => const OnboardingScreen()),
-    GetPage(name: AppRoutes.login, page: () => const LoginScreen()),
     GetPage(
       name: AppRoutes.main,
       binding: MainBinding(),

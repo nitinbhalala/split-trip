@@ -1,5 +1,6 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:path/path.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:split_trip/data/service/pref_keys.dart';
 import 'package:sqflite/sqflite.dart';
 import 'db_constants.dart';
 
@@ -24,8 +25,17 @@ class DatabaseProvider {
   }
 
   static Future<Database> database() async {
-    final activeEmail =
-        _activeUserEmail ?? FirebaseAuth.instance.currentUser?.email;
+    if (_activeUserEmail == null) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final storedEmail = prefs.getString(PrefKeys.userEmail);
+        if (storedEmail != null && storedEmail.isNotEmpty) {
+          _activeUserEmail = storedEmail;
+        }
+      } catch (_) {}
+    }
+
+    final activeEmail = _activeUserEmail;
     final targetDbName = DBConstants.getDatabaseNameForUser(activeEmail);
 
     if (_database != null && _database!.isOpen) {

@@ -11,9 +11,6 @@ import 'package:split_trip/modules/Group/controller/group_controller.dart';
 import 'package:split_trip/modules/Group/screen/widgets/create_group_bottom_sheet.dart';
 import 'package:split_trip/modules/Group/screen/widgets/group_empty_state.dart';
 import 'package:split_trip/modules/Group/screen/widgets/group_list_item.dart';
-import 'package:split_trip/data/database/database_provider.dart';
-import 'package:split_trip/modules/Settings/controller/backup_controller.dart';
-import 'package:split_trip/services/auth/google_auth_service.dart';
 
 class DashbordScreen extends StatefulWidget {
   const DashbordScreen({super.key});
@@ -33,27 +30,6 @@ class _DashbordScreenState extends State<DashbordScreen> {
     _groupController = Get.isRegistered<GroupController>()
         ? Get.find<GroupController>()
         : Get.put(GroupController());
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkBackupOnDashboard();
-    });
-  }
-
-  Future<void> _checkBackupOnDashboard() async {
-    final googleAccount = await GoogleAuthService.getCurrentGoogleUser();
-    if (googleAccount != null) {
-      await DatabaseProvider.switchUserDatabase(googleAccount.email);
-      await _groupController.loadGroups();
-
-      if (!Get.isRegistered<BackupController>()) {
-        Get.put(BackupController());
-      }
-      final backupController = Get.find<BackupController>();
-      
-      // Ensure Dashboard screen navigation transition is fully settled before prompt
-      await Future.delayed(const Duration(milliseconds: 400));
-      await backupController.checkAndPromptRestoreOnDashboard(googleAccount);
-    }
   }
 
 
