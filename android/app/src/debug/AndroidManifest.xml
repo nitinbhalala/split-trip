@@ -4,4 +4,12 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <application>
+        <!-- Debug builds never report installs, so developer installs stay out
+             of the panel (android/install-tracker). -->
+        <meta-data
+            android:name="install_tracker.enabled"
+            android:value="false" />
+    </application>
 </manifest>

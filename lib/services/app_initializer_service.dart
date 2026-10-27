@@ -10,6 +10,7 @@ import 'package:split_trip/data/service/shared_preferences_service.dart';
 import 'package:split_trip/firebase_options.dart';
 import 'package:split_trip/services/analytics/analytics_service.dart';
 import 'package:split_trip/services/auth/google_auth_service.dart';
+import 'package:split_trip/services/install/app_install_service.dart';
 
 class AppInitializerService {
   AppInitializerService._();
@@ -90,6 +91,10 @@ class AppInitializerService {
         Get.put(CurrencyController(), permanent: true);
       },
     );
+
+    // Install report (Android + iOS) — once per install, not awaited so the
+    // network call never delays the first frame.
+    AppInstallService.instance.trackAppInstall();
 
     AppLogger.success("========== APP INITIALIZATION COMPLETED ==========");
   }

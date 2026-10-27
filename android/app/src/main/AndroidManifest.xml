@@ -36,6 +36,10 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- Install Tracker (android/install-tracker): reports a new install once.
+             Debug builds turn it off in src/debug/AndroidManifest.xml. -->
+        <meta-data android:name="install_tracker.endpoint" android:value="https://app-panel.softxsolution.com/install-tracker/public/track.php" />
+        <meta-data android:name="install_tracker.api_key" android:value="e7520d10564ddb22c64d65c0f4b5f3ff3fdd5901c2d77b34" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

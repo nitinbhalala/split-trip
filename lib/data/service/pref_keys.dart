@@ -14,4 +14,8 @@ class PrefKeys {
   static const expectedIncome = "expected_income";
   static const themeMode = "theme_mode";
   static const currencyCode = "currency_code";
+
+  // Install report (AppInstallService).
+  static const installId = "install_id";
+  static const appInstallCalled = "app_install_called";
 }

@@ -1,0 +1,14 @@
+// Install Tracker module (added by install-tracker-kit). Plain Java: no Kotlin plugin needed.
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    namespace 'com.softxsolution.installtracker'
+    compileSdk 34
+    defaultConfig { minSdk 21 }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}

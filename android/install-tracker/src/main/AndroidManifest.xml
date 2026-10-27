@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <application>
+        <provider
+            android:name="com.softxsolution.installtracker.InstallTrackerInitProvider"
+            android:authorities="${applicationId}.installtracker"
+            android:exported="false"
+            android:initOrder="50" />
+    </application>
+</manifest>
