@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:split_trip/services/ads/action_interstitial_service.dart';
 import 'package:split_trip/core/common/button/app_elevated_button.dart';
 import 'package:split_trip/core/common/helper/app_helper.dart';
 import 'package:split_trip/core/common/widgets/custom_text_field.dart';
@@ -9,6 +10,8 @@ import 'package:split_trip/data/model/group_message_model.dart';
 import 'package:split_trip/modules/Group/controller/add_split_expense_controller.dart';
 import 'package:split_trip/modules/Group/controller/group_detail_controller.dart';
 import 'package:split_trip/modules/Group/screen/widgets/add_split_expense_widgets.dart';
+import 'package:split_trip/services/ads/ad_unit_ids.dart';
+import 'package:split_trip/services/ads/banner_or_native_ad_widget.dart';
 
 class AddSplitExpenseScreen extends StatefulWidget {
   final GroupDetailController controller;
@@ -84,6 +87,8 @@ class _AddSplitExpenseScreenState extends State<AddSplitExpenseScreen> {
             } else if (splitController.step.value == 2) {
               splitController.step.value = 1;
             } else {
+              // ← closes the screen: counts for the back interstitial.
+              ActionInterstitialService.markBackIntent();
               Get.back();
             }
           },
@@ -151,6 +156,9 @@ class _AddSplitExpenseScreenState extends State<AddSplitExpenseScreen> {
             ),
           ),
         ),
+
+        // Banner Ad (between the Next button and the keypad)
+        _buildBannerAd(),
 
         // Custom Numeric Keypad
         AddSplitNumericKeypad(
@@ -297,6 +305,9 @@ class _AddSplitExpenseScreenState extends State<AddSplitExpenseScreen> {
             ),
           ),
         ),
+
+        // Banner Ad (below the Next button)
+        _buildBannerAd(),
       ],
     );
   }
@@ -528,7 +539,22 @@ class _AddSplitExpenseScreenState extends State<AddSplitExpenseScreen> {
             );
           }),
         ),
+
+        // Banner Ad (below the Send request button)
+        _buildBannerAd(),
       ],
+    );
+  }
+
+  // ── Banner Ad (native if the banner fails) ─────────────────────────────────
+  // Same placement on all three steps, so moving between steps keeps the
+  // same ad instead of loading a new one.
+  Widget _buildBannerAd() {
+    return BannerOrNativeAdWidget(
+      bannerAdUnitId: AdUnitIds.addSplitExpenseBanner,
+      nativeAdUnitId: AdUnitIds.addSplitExpenseNative,
+      bannerPlacementId: 'add_split_expense_banner',
+      nativePlacementId: 'add_split_expense_banner_fallback_native',
     );
   }
 }

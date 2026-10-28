@@ -3,6 +3,7 @@ import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:split_trip/core/common/button/app_ads_button.dart';
 import 'package:split_trip/core/common/button/app_elevated_button.dart';
 import 'package:split_trip/core/common/button/app_outlined_button.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
@@ -41,6 +42,8 @@ Future<bool?> showAppConfirmationDialog({
   String cancelText = "Cancel",
   bool isDeleteAction = false,
   IconData? icon,
+  // Confirm runs an interstitial first (caller's flow) — show the "Ads" tag.
+  bool showAdsTag = false,
 }) {
   return commonGeneralDialog<bool>(
     context: context,
@@ -104,16 +107,30 @@ Future<bool?> showAppConfirmationDialog({
                   ),
                   AppSize.gapW(12),
                   Expanded(
-                    child: AppElevatedButton(
-                      borderRadius:AppSize.r(9),
-                      title: confirmText,
-                      onPressed: () => Get.back(result: true),
-                      color: isDeleteAction
-                          ? AppColors.error
-                          : AppColors.primary,
-                      textColor: AppColors.white,
-                      height: AppSize.h(40),
-                    ),
+                    child: showAdsTag
+                        // Only the "Ads" tag here (showAds: false) — the
+                        // caller shows the ad after the dialog closes.
+                        ? AppAdsButton(
+                            showAds: false,
+                            borderRadius: BorderRadius.circular(AppSize.r(9)),
+                            title: confirmText,
+                            onPressed: () => Get.back(result: true),
+                            color: isDeleteAction
+                                ? AppColors.error
+                                : AppColors.primary,
+                            textColor: AppColors.white,
+                            height: AppSize.h(40),
+                          )
+                        : AppElevatedButton(
+                            borderRadius:AppSize.r(9),
+                            title: confirmText,
+                            onPressed: () => Get.back(result: true),
+                            color: isDeleteAction
+                                ? AppColors.error
+                                : AppColors.primary,
+                            textColor: AppColors.white,
+                            height: AppSize.h(40),
+                          ),
                   ),
                 ],
               ),

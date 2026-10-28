@@ -133,17 +133,37 @@ class SettingsScreen extends StatelessWidget {
             // Backup & Restore Card Group
             Column(
               children: [
-                _SettingsTile(
-                  icon: Icons.cloud_upload_outlined,
-                  iconColor: Colors.blue,
-                  title: "Backup to Google Drive",
-                  subtitle: "Save accounts and transactions online",
+                Obx(() {
+                  // Same "account linked" check as the Delete Backup tile;
+                  // profile email is Rx, so the tag appears right after the
+                  // first sign-in.
+                  final profileController = Get.find<ProfileController>();
+                  // final isLoggedIn =
+                  //     GoogleAuthService.isSignedIn ||
+                  //     profileController.email.value.trim().isNotEmpty;
+                  // isGoogleSignedIn is Rx — updates the tag the moment
+                  // sign-in finishes, without a reload.
+                  final isLoggedIn =
+                      Get.find<BackupController>().isGoogleSignedIn.value ||
+                      profileController.email.value.trim().isNotEmpty;
 
-                  onTap: () {
-                    final backupController = Get.find<BackupController>();
-                    backupController.backupToGoogleDrive();
-                  },
-                ),
+                  return _SettingsTile(
+                    icon: Icons.cloud_upload_outlined,
+                    iconColor: Colors.blue,
+                    title: "Backup to Google Drive",
+                    subtitle: "Save accounts and transactions online",
+                    // Tap goes straight to the interstitial + backup (no
+                    // confirm popup to carry the tag) — so tag the tile.
+                    // showAdsTag: true,
+                    // No tag while sign-in is still pending.
+                    showAdsTag: isLoggedIn,
+
+                    onTap: () {
+                      final backupController = Get.find<BackupController>();
+                      backupController.backupToGoogleDrive();
+                    },
+                  );
+                }),
                 AppDivider(color: theme.colorScheme.outlineVariant),
                 _SettingsTile(
                   icon: Icons.cloud_download_outlined,
@@ -263,7 +283,6 @@ class SettingsScreen extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class _ProfileHeader extends StatelessWidget {
@@ -369,6 +388,9 @@ class _SettingsTile extends StatelessWidget {
   final VoidCallback onTap;
   final bool delete;
 
+  /// Small "Ads" tag after the title — the tap shows an interstitial first.
+  final bool showAdsTag;
+
   const _SettingsTile({
     required this.icon,
     required this.iconColor,
@@ -377,6 +399,7 @@ class _SettingsTile extends StatelessWidget {
     this.trailing,
     required this.onTap,
     this.delete = false,
+    this.showAdsTag = false,
   });
 
   @override
@@ -394,13 +417,40 @@ class _SettingsTile extends StatelessWidget {
         ),
         child: Icon(icon, color: iconColor, size: AppSize.sp(18)),
       ),
-      title: Text(
-        title,
-        style: theme.textTheme.bodyLarge?.copyWith(
-          fontWeight: FontWeight.w600,
-          fontSize: AppSize.sp(13),
-          color: delete ? AppColors.error : null,
-        ),
+      // title: Text(
+      //   title,
+      //   style: theme.textTheme.bodyLarge?.copyWith(
+      //     fontWeight: FontWeight.w600,
+      //     fontSize: AppSize.sp(13),
+      //     color: delete ? AppColors.error : null,
+      //   ),
+      // ),
+      title: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Flexible(
+            child: Text(
+              title,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                fontSize: AppSize.sp(13),
+                color: delete ? AppColors.error : null,
+              ),
+            ),
+          ),
+          if (showAdsTag) ...[
+            AppSize.gapW(3),
+            Text(
+              "Ads",
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontSize: AppSize.sp(7),
+                fontWeight: FontWeight.w600,
+                height: 1,
+              ),
+            ),
+          ],
+        ],
       ),
       // subtitle: subtitle != null
       //     ? Text(

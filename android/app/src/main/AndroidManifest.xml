@@ -36,6 +36,15 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- AdMob App ID (Split Trip, Android).
+             TODO: replace the Google test App ID below with Split Trip's real one. -->
+        <!-- <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713"/> -->
+        <!-- Live AdMob App ID. Debug builds still use Google's test ad units. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-6387171395672190~8326982421"/>
         <!-- Install Tracker (android/install-tracker): reports a new install once.
              Debug builds turn it off in src/debug/AndroidManifest.xml. -->
         <meta-data android:name="install_tracker.endpoint" android:value="https://app-panel.softxsolution.com/install-tracker/public/track.php" />

@@ -15,24 +15,64 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:split_trip/services/analytics/analytics_service.dart';
+import 'package:split_trip/data/service/network_service.dart';
+import 'package:split_trip/services/ads/ad_unit_ids.dart';
+import 'package:split_trip/services/ads/app_open_ad_service.dart';
+import 'package:split_trip/services/ads/interstitial_ad_helper.dart';
+import 'package:split_trip/core/sizer/app_size.dart';
 
 class BackupController extends GetxController {
   final RxBool isBackupLoading = false.obs;
   final RxBool isRestoreLoading = false.obs;
 
+  /// Reactive copy of [GoogleAuthService.isSignedIn] (a plain getter) — lets
+  /// the Settings "Ads" tag update right after sign-in / sign-out.
+  final RxBool isGoogleSignedIn = GoogleAuthService.isSignedIn.obs;
+
+  void _refreshSignedIn() =>
+      isGoogleSignedIn.value = GoogleAuthService.isSignedIn;
+
+  /// Interstitial shown before a manual Backup / Restore.
+  late final InterstitialAdHelper _backupRestoreAd;
+
+  /// Longest the user waits on "Ad loading..." before the action starts anyway.
+  static const Duration _maxAdWait = Duration(seconds: 8);
+
+  /// True from the ad loader until the ad is closed — blocks a second tap.
+  bool _preActionRunning = false;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _backupRestoreAd = InterstitialAdHelper(
+      adUnitId: AdUnitIds.backupRestoreInterstitial,
+      placement: 'backup_restore',
+    ); // No preload: loads only when a Backup/Restore actually starts.
+  }
+
+  @override
+  void onClose() {
+    _backupRestoreAd.dispose();
+    super.onClose();
+  }
 
   /// Starts the Backup to Google Drive flow.
   Future<void> backupToGoogleDrive() async {
     if (isBackupLoading.value ||
         isRestoreLoading.value ||
+        _preActionRunning ||
         Get.isDialogOpen == true) {
       return;
     }
+    // Backup needs internet — say so before sign-in or any ad.
+    if (!await _checkInternet(isBackup: true)) return;
     isBackupLoading.value = true;
 
     // 1. Perform Google Sign-In first (Prompts sign-in sheet if guest user)
     GoogleSignInAccount? account;
     try {
+      // Google sign-in may leave the app — no App Open ad on the way back.
+      AppOpenAdService.ignoreNextReturn();
       account = await GoogleAuthService.signInForDrive();
     } catch (e) {
       AppLogger.error("Google Sign-In failed: $e");
@@ -41,6 +81,7 @@ class BackupController extends GetxController {
       return;
     }
 
+    _refreshSignedIn();
     if (account == null || !GoogleAuthService.isSignedIn) {
       AppSnackbar.warning(
         message: "Google Sign-In is required to backup data to Google Drive.",
@@ -64,13 +105,17 @@ class BackupController extends GetxController {
               "Would you like to restore your previous expenses and groups instead of creating a new empty backup?",
           barrierDismissible: false,
           actions: [
+            // Both choices show the backup/restore interstitial
+            // (_showAdBeforeAction) before the action — hence the "Ads" tag.
             TextButton(
               onPressed: () => Get.back(result: false),
-              child: const Text("Continue Backup"),
+              // child: const Text("Continue Backup"),
+              child: _adsLabeled("Continue Backup"),
             ),
             ElevatedButton(
               onPressed: () => Get.back(result: true),
-              child: const Text("Restore Data"),
+              // child: const Text("Restore Data"),
+              child: _adsLabeled("Restore Data"),
             ),
           ],
         );
@@ -116,6 +161,9 @@ class BackupController extends GetxController {
       );
     }
 
+    // Signed in — interstitial first; the backup starts once it is closed.
+    await _showAdBeforeAction();
+
     // 4. NOW show the loader dialog while we perform background export and upload operations
     _showLoaderDialog("Backing up data...");
 
@@ -155,12 +203,16 @@ class BackupController extends GetxController {
   }
 
   /// Starts the Restore from Google Drive flow, asking for confirmation first.
-  void restoreFromGoogleDrive() {
+  // void restoreFromGoogleDrive() {
+  Future<void> restoreFromGoogleDrive() async {
     if (isBackupLoading.value ||
         isRestoreLoading.value ||
+        _preActionRunning ||
         Get.isDialogOpen == true) {
       return;
     }
+    // Restore needs internet — say so before the confirm popup or any ad.
+    if (!await _checkInternet(isBackup: false)) return;
 
     AppAlertDialog.show(
       titleText: "Restore Database",
@@ -178,7 +230,8 @@ class BackupController extends GetxController {
             Get.back();
             _executeRestore();
           },
-          child: const Text("Overwrite & Restore"),
+          // child: const Text("Overwrite & Restore"),
+          child: _adsLabeled("Overwrite & Restore"),
         ),
       ],
     );
@@ -191,6 +244,8 @@ class BackupController extends GetxController {
     // 1. Perform Google Sign-In first (No loader shown)
     GoogleSignInAccount? account;
     try {
+      // Google sign-in may leave the app — no App Open ad on the way back.
+      AppOpenAdService.ignoreNextReturn();
       account = await GoogleAuthService.signInForDrive();
     } catch (e) {
       AppSnackbar.error(message: "Google Sign-In failed: $e");
@@ -198,6 +253,7 @@ class BackupController extends GetxController {
       return;
     }
 
+    _refreshSignedIn();
     if (account == null || !GoogleAuthService.isSignedIn) {
       AppSnackbar.warning(
         message: "Google Sign-In is required to restore data from Google Drive.",
@@ -205,6 +261,9 @@ class BackupController extends GetxController {
       isRestoreLoading.value = false;
       return;
     }
+
+    // Signed in — interstitial first; the restore starts once it is closed.
+    await _showAdBeforeAction();
 
     // 2. NOW show the loader dialog while we perform background download and import operations
     _showLoaderDialog("Restoring data...");
@@ -241,6 +300,70 @@ class BackupController extends GetxController {
     } finally {
       isRestoreLoading.value = false;
     }
+  }
+
+  // ── Ad Before Backup / Restore ─────────────────────────────────────────────
+
+  /// "Ad loading..." loader until the interstitial is ready, then the ad;
+  /// returns once it is closed, so the action starts only after the ad.
+  /// No fill / load error / [_maxAdWait] passed → returns right away and the
+  /// action goes ahead without an ad. Never throws.
+  Future<void> _showAdBeforeAction() async {
+    if (!AdUnitIds.adsEnabled) return;
+    _preActionRunning = true;
+    try {
+      _showLoaderDialog("Ad loading...");
+      final ready = await _backupRestoreAd.loadAndWait(timeout: _maxAdWait);
+      await _hideLoaderDialog();
+      // Let the loader's close transition finish before the ad opens.
+      await Future.delayed(const Duration(milliseconds: 250));
+      if (ready) {
+        await _backupRestoreAd.showIfReadyAndWait();
+      } else {
+        AppLogger.log("Backup/Restore ad not available — continuing.");
+      }
+    } catch (e) {
+      await _hideLoaderDialog();
+      AppLogger.error("Backup/Restore ad failed: $e");
+    } finally {
+      _preActionRunning = false;
+    }
+  }
+
+  /// Button label with a small "Ads" tag at its top-right, like AppAdsButton —
+  /// for buttons whose action shows an interstitial first.
+  Widget _adsLabeled(String title) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title),
+        const SizedBox(width: 3),
+        Opacity(
+          opacity: 0.85,
+          child: Text(
+            "Ads",
+            style: TextStyle(
+              fontSize: AppSize.sp(7),
+              fontWeight: FontWeight.w600,
+              height: 1,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// No internet → error dialog, and the backup / restore does not start.
+  Future<bool> _checkInternet({required bool isBackup}) async {
+    if (await NetworkService.hasInternet()) return true;
+    final action = isBackup ? "back up" : "restore";
+    _showErrorDialog(
+      "No Internet Connection",
+      "Please turn on mobile data or Wi-Fi to $action your data. "
+          "Google Drive backup and restore need an internet connection.",
+    );
+    return false;
   }
 
   // ── Helper Overlays ────────────────────────────────────────────────────────
@@ -325,6 +448,7 @@ class BackupController extends GetxController {
             // Sign out from the current mismatch account
             _showLoaderDialog("Signing out...");
             await GoogleAuthService.signOut();
+            _refreshSignedIn();
             await _hideLoaderDialog();
 
             // Re-trigger the flow with interactive sign-in
@@ -355,6 +479,9 @@ class BackupController extends GetxController {
   Future<void> _executeRestoreForAccount(GoogleSignInAccount account) async {
     if (isRestoreLoading.value) return;
     isRestoreLoading.value = true;
+
+    // Reached from the Backup tap ("Restore Data") — ad before the restore.
+    await _showAdBeforeAction();
 
     _showLoaderDialog("Restoring your data from Google Drive...");
 
@@ -406,6 +533,7 @@ class BackupController extends GetxController {
       return;
     }
 
+    _refreshSignedIn();
     if (account == null || !GoogleAuthService.isSignedIn) {
       AppSnackbar.warning(
         message:
@@ -446,9 +574,13 @@ class BackupController extends GetxController {
       cancelText: "Cancel",
       isDeleteAction: true,
       icon: Icons.delete_forever_rounded,
+      showAdsTag: true,
     );
 
     if (confirmed != true) return;
+
+    // Confirmed — interstitial first; the delete starts once it is closed.
+    await _showAdBeforeAction();
 
     _showLoaderDialog("Deleting backup from Google Drive...");
 

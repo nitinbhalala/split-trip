@@ -11,6 +11,7 @@ import 'package:split_trip/modules/Group/controller/group_controller.dart';
 import 'package:split_trip/modules/Group/screen/widgets/create_group_bottom_sheet.dart';
 import 'package:split_trip/modules/Group/screen/widgets/group_empty_state.dart';
 import 'package:split_trip/modules/Group/screen/widgets/group_list_item.dart';
+import 'package:split_trip/services/ads/delete_group_ad.dart';
 
 class DashbordScreen extends StatefulWidget {
   const DashbordScreen({super.key});
@@ -77,6 +78,8 @@ class _DashbordScreenState extends State<DashbordScreen> {
         TextButton(
           onPressed: () async {
             Get.back();
+            // Interstitial first; the group is deleted after it closes.
+            await DeleteGroupAd.showBeforeDelete();
             final success = await _groupController.deleteGroup(groupId);
             if (success) {
               AppSnackbar.success(message: "Group '$groupName' deleted successfully.");
@@ -84,7 +87,13 @@ class _DashbordScreenState extends State<DashbordScreen> {
               AppSnackbar.error(message: "Failed to delete group.");
             }
           },
-          child: Text(
+          // child: Text(
+          //   "Delete",
+          //   style: Theme.of(
+          //     context,
+          //   ).textTheme.labelLarge?.copyWith(color: AppColors.error),
+          // ),
+          child: DeleteGroupAd.label(
             "Delete",
             style: Theme.of(
               context,

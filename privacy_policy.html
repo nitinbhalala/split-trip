@@ -71,8 +71,6 @@
             object-fit: contain;
         }
 
-        /* Removed logo-badge svg styling – not needed after using image */
-
         h1 {
             font-size: 2.5rem;
             font-weight: 700;
@@ -184,6 +182,10 @@
             color: var(--text-main);
         }
 
+        a {
+            color: #818cf8;
+        }
+
         .badge-google {
             background: rgba(239, 68, 68, 0.15);
             color: #fca5a5;
@@ -251,10 +253,10 @@
 
     <div class="container">
         <header>
-            <img src="assets/images/app_icon.png" alt="App Icon" class="app-icon" />
+            <img src="https://res.cloudinary.com/moy71k4b/image/upload/v1786537546/app_logo1.png" alt="App Icon" class="app-icon" />
             <h1>Split Trip Privacy Policy</h1>
             <p class="subtitle">Smart & Transparent Trip Expense Management</p>
-            <div class="last-updated">Effective Date: August 12, 2026</div>
+            <div class="last-updated">Effective Date: October 28, 2026</div>
         </header>
 
         <!-- Quick Summary Box -->
@@ -264,29 +266,29 @@
                 <div class="highlight-item">
                     <span style="font-size: 1.5rem;">📱</span>
                     <div>
-                        <h3>Local Storage First</h3>
-                        <p>Your groups, balances, and expenses are stored locally on your device in isolated SQLite databases.</p>
+                        <h3>Your Expenses Stay on Your Device</h3>
+                        <p>Your groups, members, balances and expenses are stored locally on your device. We never upload them to our servers.</p>
                     </div>
                 </div>
                 <div class="highlight-item">
                     <span style="font-size: 1.5rem;">☁️</span>
                     <div>
                         <h3>Private Cloud Backup</h3>
-                        <p>Google Drive backup stores encrypted data only in your personal Google Drive app folder.</p>
+                        <p>If you choose to back up, the backup file goes only to your own Google Drive.</p>
                     </div>
                 </div>
                 <div class="highlight-item">
-                    <span style="font-size: 1.5rem;">🔐</span>
+                    <span style="font-size: 1.5rem;">📢</span>
                     <div>
-                        <h3>Secure Authentication</h3>
-                        <p>Google & Apple Sign-In are used strictly for user profile identification and cloud syncing.</p>
+                        <h3>Free App with Ads</h3>
+                        <p>Split Trip shows ads from Google AdMob and its partners. They may use your device's advertising ID and basic device data to show and measure ads.</p>
                     </div>
                 </div>
                 <div class="highlight-item">
                     <span style="font-size: 1.5rem;">🚫</span>
                     <div>
-                        <h3>Zero Data Selling</h3>
-                        <p>We do not track, profile, share, or sell your personal or financial data to third-party advertisers.</p>
+                        <h3>No Data Selling</h3>
+                        <p>We do not sell your personal or financial data, and your expense records are never shared with advertisers.</p>
                     </div>
                 </div>
             </div>
@@ -295,91 +297,120 @@
         <!-- Section 1: Information We Collect -->
         <div class="content-card">
             <h2><span>01</span> Information We Collect</h2>
-            <p><strong>Split Trip</strong> collects minimal data required to provide seamless expense splitting, multi-account database isolation, and Google Drive cloud backup functionality.</p>
-            
-            <p><strong>A. Account & Profile Data:</strong></p>
+            <p><strong>Split Trip</strong> collects only the data needed to split expenses, keep each account's data separate, back up to Google Drive, and keep the app free with ads.</p>
+
+            <p><strong>A. Account Data (only if you sign in):</strong></p>
             <ul>
-                <li><strong>Google / Apple Account Info:</strong> Email address, full name, and profile picture URL obtained during Google or Apple authentication.</li>
-                <li><strong>User Profile Info:</strong> Custom profile name, email, and profile avatar stored locally.</li>
+                <li><strong>Google Account email:</strong> When you sign in with Google, we use your email address to keep each account's data in its own separate local database and to back up to your Google Drive.</li>
+                <li><strong>User Profile Info:</strong> The name, email and profile photo you enter in the app are stored locally on your device.</li>
             </ul>
 
-            <p><strong>B. App Usage & Expense Data:</strong></p>
+            <p><strong>B. Expense Data (stays on your device):</strong></p>
             <ul>
-                <li><strong>Trip & Group Data:</strong> Group names, member lists, trip descriptions, icon preferences, and selected currency.</li>
-                <li><strong>Expense Data:</strong> Payment records, split ratios, amounts, payer details, and transaction dates.</li>
-<li><strong>Data Storage:</strong> All data remains locally on the user's device; the app does not read, write, or store any data on external servers.</li>
-                </ul>
+                <li><strong>Trip & Group Data:</strong> Group names, member lists, trip descriptions, icons and images, and selected currency.</li>
+                <li><strong>Expense Data:</strong> Amounts, split ratios, payer details, payment records and transaction dates.</li>
+                <li><strong>Where it is stored:</strong> This data is stored only on your device, and in your own Google Drive if you choose to back up. It is never sent to our servers or to advertisers.</li>
+            </ul>
+
+            <p><strong>C. Device & Usage Data (collected automatically):</strong></p>
+            <ul>
+                <li><strong>Advertising data:</strong> Google AdMob and its mediation partners may collect your device's advertising ID, IP address, device and network information, and ad interactions (such as views and clicks) to show, measure and improve ads.</li>
+                <li><strong>App usage & diagnostics:</strong> Firebase Analytics collects anonymous usage information such as screens viewed, app events, ad revenue events, app version, device model and OS version. This helps us understand how the app is used and improve it.</li>
+                <li><strong>Install report:</strong> Once per install, the app sends a random install ID, a one-way hashed device key (the raw device ID never leaves your device), package name, platform, app version, OS version, device model and time zone to our install-report server. We use this only to count installs.</li>
+            </ul>
         </div>
 
         <!-- Section 2: How We Use Your Data -->
         <div class="content-card">
             <h2><span>02</span> How We Use Your Information</h2>
-            <p>We use the collected information exclusively for the following functional purposes:</p>
+            <p>We use the collected information only for the following purposes:</p>
             <ul>
-                <li>To calculate exact group balances, individual shares, and simplified debt settlements.</li>
-                <li>To maintain multi-account user isolation so switching Google/Apple accounts keeps local data completely segregated.</li>
-                <li>To compress and store custom group images locally on your device without unnecessary cloud bandwidth.</li>
-                <li>To enable user-controlled backup and restore of local SQLite databases via Google Drive.</li>
+                <li>To calculate group balances, individual shares and simplified debt settlements.</li>
+                <li>To keep each signed-in account's local data completely separate.</li>
+                <li>To compress and store group images locally on your device.</li>
+                <li>To let you back up and restore your data through your own Google Drive.</li>
+                <li>To show ads that keep Split Trip free, and to measure ad performance and ad revenue.</li>
+                <li>To control how often ads appear (using Firebase Remote Config) and to understand app usage and fix problems (using Firebase Analytics).</li>
+                <li>To count app installs.</li>
             </ul>
         </div>
 
-        <!-- Section 3: Google Drive API Limited Use Disclosure -->
+        <!-- Section 3: Advertising -->
         <div class="content-card">
-            <h2><span>03</span> Google Drive API & Data Disclosure</h2>
-            <p>Split Trip integrates with <strong>Google Drive API</strong> to offer optional automated database backup and restore functionality.</p>
+            <h2><span>03</span> Advertising</h2>
+            <p>Split Trip is free and shows ads, including banner, native, full-screen (interstitial) and app-open ads.</p>
             <ul>
-                <li><strong>Scope Used:</strong> Split Trip uses restricted app-data scope (<code class="badge-google">drive.appdata</code> or <code class="badge-google">drive.file</code>).</li>
-                <li><strong>Limited Access:</strong> Split Trip ONLY accesses backup files created by the app itself within your personal Google Drive storage space.</li>
-                <li><strong>No Scanning:</strong> The app does NOT read, view, scan, modify, or delete any other personal documents, photos, or files in your Google Drive.</li>
-                <li><strong>Google User Data Policy:</strong> Split Trip's use of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" style="color: #818cf8;">Google API Services User Data Policy</a>, including Limited Use requirements.</li>
+                <li><strong>Ad providers:</strong> Ads are served by <strong>Google AdMob</strong>. AdMob may also serve ads from mediation partners such as <strong>Meta Audience Network</strong>.</li>
+                <li><strong>What they use:</strong> These providers may use your device's advertising ID, IP address, device information and ad interactions to show ads, including personalized ads, and to measure their performance and prevent fraud.</li>
+                <li><strong>What they never get from us:</strong> Your groups, members, amounts, expense records and backups are never shared with ad providers.</li>
+                <li><strong>Your choices on Android:</strong> You can reset or delete your advertising ID, or opt out of personalized ads, in your device settings (Settings → Google → Ads, or Settings → Privacy → Ads).</li>
+                <li><strong>Your choices on iOS:</strong> The app does not access your advertising identifier (IDFA) unless you allow tracking through Apple's App Tracking Transparency prompt. You can change this anytime in Settings → Privacy & Security → Tracking.</li>
+                <li>Learn how Google uses data from apps that use its services: <a href="https://policies.google.com/technologies/partner-sites" target="_blank">How Google uses information from apps</a>.</li>
             </ul>
         </div>
 
-        <!-- Section 4: Data Security & Storage -->
+        <!-- Section 4: Google Drive API Limited Use Disclosure -->
         <div class="content-card">
-            <h2><span>04</span> Storage & Data Security</h2>
-            <p>We prioritize your privacy by storing your sensitive financial and trip split records directly on your local device storage using isolated SQLite database engines.</p>
+            <h2><span>04</span> Google Drive API & Data Disclosure</h2>
+            <p>Split Trip uses the <strong>Google Drive API</strong> to offer optional backup and restore of your data.</p>
             <ul>
-                <li><strong>Local Database Isolation:</strong> Each logged-in account operates in its own sanitized, separate database file (e.g., <code>split_trip_user.db</code>).</li>
-                <li><strong>Image Storage:</strong> Picked group images are automatically compressed (max 512x512) and saved permanently in your app’s private documents folder.</li>
-                <li><strong>Encryption in Transit:</strong> Any cloud backup transfer to Google Drive occurs over HTTPS/TLS encrypted connections.</li>
-            </ul>
-<p>All data is read and written only on the user's device; no data is transmitted to external servers.</p>
-        </div>
-
-        <!-- Section 5: Third-Party Services -->
-        <div class="content-card">
-            <h2><span>05</span> Third-Party Services & Libraries</h2>
-            <p>Split Trip integrates trusted third-party SDKs for authentication and platform services:</p>
-            <ul>
-                <li><strong>Firebase Authentication (Google LLC):</strong> Used to securely sign in users via Google or Apple accounts. Privacy policy: <a href="https://firebase.google.com/support/privacy" target="_blank" style="color: #818cf8;">Firebase Privacy Policy</a>.</li>
-                <li><strong>Google Play Services & Drive API:</strong> Used for account validation and database backup.</li>
-                <li><strong>Apple Sign-In (Apple Inc.) via Firebase:</strong> Used for authentication on iOS devices through Firebase Authentication. Privacy policy: <a href="https://www.apple.com/legal/privacy/" target="_blank" style="color: #818cf8;">Apple Privacy Policy</a>.</li>
+                <li><strong>Scope Used:</strong> Split Trip uses the restricted <code class="badge-google">drive.file</code> scope, which gives access only to files the app itself creates.</li>
+                <li><strong>Limited Access:</strong> Split Trip only accesses the backup files it created in your Google Drive.</li>
+                <li><strong>No Scanning:</strong> The app does NOT read, view, scan, modify or delete any other documents, photos or files in your Google Drive.</li>
+                <li><strong>Not used for ads:</strong> Data received from Google APIs is never used for advertising and never shared with ad providers.</li>
+                <li><strong>Google User Data Policy:</strong> Split Trip's use of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank">Google API Services User Data Policy</a>, including the Limited Use requirements.</li>
             </ul>
         </div>
 
-        <!-- Section 6: User Rights & Data Deletion -->
+        <!-- Section 5: Data Security & Storage -->
         <div class="content-card">
-            <h2><span>06</span> Data Retention & Your Rights (Data Deletion)</h2>
+            <h2><span>05</span> Storage & Data Security</h2>
+            <p>Your trip and expense records are stored directly on your device in local SQLite databases.</p>
+            <ul>
+                <li><strong>Local Database Isolation:</strong> Each signed-in account uses its own separate database file on your device.</li>
+                <li><strong>Image Storage:</strong> Group images you pick are compressed (max 512x512) and saved in the app's private folder on your device.</li>
+                <li><strong>Encryption in Transit:</strong> Backups to Google Drive, ad requests, analytics and the install report are all sent over encrypted HTTPS/TLS connections.</li>
+            </ul>
+            <p>Your expense data is read and written only on your device and in your own Google Drive. The only data that leaves your device is the advertising, analytics and install data described above.</p>
+        </div>
+
+        <!-- Section 6: Third-Party Services -->
+        <div class="content-card">
+            <h2><span>06</span> Third-Party Services & Libraries</h2>
+            <p>Split Trip uses the following trusted third-party services. Each has its own privacy policy:</p>
+            <ul>
+                <li><strong>Google Sign-In & Google Drive API (Google LLC):</strong> Sign-in and optional backup to your Google Drive. <a href="https://policies.google.com/privacy" target="_blank">Google Privacy Policy</a>.</li>
+                <li><strong>Google AdMob (Google LLC):</strong> Shows and measures ads. <a href="https://policies.google.com/privacy" target="_blank">Google Privacy Policy</a>.</li>
+                <li><strong>Meta Audience Network (Meta Platforms, Inc.):</strong> Ad partner through AdMob mediation. <a href="https://www.facebook.com/privacy/policy/" target="_blank">Meta Privacy Policy</a>.</li>
+                <li><strong>Firebase Analytics & Firebase Remote Config (Google LLC):</strong> App usage statistics, ad revenue measurement and ad frequency settings. <a href="https://firebase.google.com/support/privacy" target="_blank">Firebase Privacy & Security</a>.</li>
+                <li><strong>Google Play Services:</strong> Account and platform services on Android.</li>
+            </ul>
+        </div>
+
+        <!-- Section 7: User Rights & Data Deletion -->
+        <div class="content-card">
+            <h2><span>07</span> Data Retention & Your Rights (Data Deletion)</h2>
             <p>You have full control over your data at all times:</p>
             <ul>
-                <li><strong>Delete App Data:</strong> Uninstalling the app or clearing app storage deletes all local SQLite databases and saved images instantly.</li>
-                <li><strong>Delete Cloud Backups:</strong> You can delete your backup file anytime directly from the Settings screen inside Split Trip or via your Google Drive Account settings.</li>
-                <li><strong>Account Deletion:</strong> Since we do not maintain central remote database servers storing your trip details, deleting local data wipes your information permanently.</li>
+                <li><strong>Delete App Data:</strong> Uninstalling the app or clearing its storage instantly deletes all local databases and saved images.</li>
+                <li><strong>Delete Cloud Backups:</strong> You can delete your backup file anytime from the Settings screen in Split Trip, or from your Google Drive.</li>
+                <li><strong>No account on our servers:</strong> We do not keep your trip or expense details on any server, so deleting your local data and backup removes it permanently.</li>
+                <li><strong>Ads & analytics data:</strong> Data collected by Google and Meta is kept according to their own policies. You can reset your advertising ID at any time in your device settings.</li>
+                <li><strong>Install report:</strong> To ask for your install record to be deleted, contact us at the email below.</li>
             </ul>
         </div>
 
-        <!-- Section 7: Children's Privacy & Policy Changes -->
+        <!-- Section 8: Children's Privacy & Policy Changes -->
         <div class="content-card">
-            <h2><span>07</span> Children's Privacy & Policy Updates</h2>
+            <h2><span>08</span> Children's Privacy & Policy Updates</h2>
             <p><strong>Children's Privacy:</strong> Split Trip is not directed to children under the age of 13. We do not knowingly collect personal information from children under 13.</p>
-            <p><strong>Policy Changes:</strong> We may update this Privacy Policy periodically. Any updates will be published on this webpage with a revised "Effective Date".</p>
+            <p><strong>Policy Changes:</strong> We may update this Privacy Policy from time to time. Any updates will be published on this page with a new "Effective Date".</p>
         </div>
 
-        <!-- Section 8: Contact Box -->
+        <!-- Section 9: Contact Box -->
         <div class="contact-box">
             <h2>Questions or Support?</h2>
-            <p>Contact Us<br>If you have any questions, suggestions, or feedback regarding this Privacy Policy or the Smart Dial application, please contact us.</p>
+            <p>Contact Us<br>If you have any questions, suggestions, or feedback regarding this Privacy Policy or the Split Trip application, please contact us.</p>
             <a href="mailto:rudraexport1@gmail.com" class="contact-email">✉️ rudraexport1@gmail.com</a>
         </div>
 

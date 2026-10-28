@@ -6,6 +6,8 @@ import 'package:split_trip/core/sizer/app_size.dart';
 import 'package:split_trip/core/theme/app_color.dart';
 import 'package:split_trip/data/model/currecy_icons_model.dart';
 import 'package:split_trip/modules/Settings/controller/currency_controller.dart';
+import 'package:split_trip/services/ads/ad_unit_ids.dart';
+import 'package:split_trip/services/ads/banner_or_native_ad_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -133,6 +135,13 @@ class CurrencySelectionScreen extends StatelessWidget {
       appBar: const CommonAppBar(
         title: "Select Currency",
         showBackButton: true,
+      ),
+      // Banner (native if the banner fails) at the bottom of the screen.
+      bottomNavigationBar: BannerOrNativeAdWidget(
+        bannerAdUnitId: AdUnitIds.selectCurrencyBanner,
+        nativeAdUnitId: AdUnitIds.selectCurrencyNative,
+        bannerPlacementId: 'select_currency_banner',
+        nativePlacementId: 'select_currency_banner_fallback_native',
       ),
       body: SafeArea(
         bottom: true,

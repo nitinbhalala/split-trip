@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:split_trip/core/common/widgets/app_logger.dart';
 import 'package:split_trip/data/database/db_constants.dart';
+import 'package:split_trip/data/service/pref_keys.dart';
 import 'package:split_trip/modules/Settings/controller/profile_controller.dart';
 import 'package:split_trip/services/auth/google_auth_service.dart';
 import 'package:split_trip/services/google_drive/google_drive_service.dart';
@@ -129,6 +130,8 @@ class BackupService {
   static Future<void> performAutoBackup() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      // Daily Auto Backup is off until the user turns it on (rewarded ad).
+      if (!(prefs.getBool(PrefKeys.dailyAutoBackupEnabled) ?? false)) return;
       final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
       final lastBackupDate = prefs.getString('last_auto_backup_date');
       final hasChanges = prefs.getBool('has_unbacked_up_changes') ?? true;

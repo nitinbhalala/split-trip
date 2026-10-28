@@ -1,5 +1,6 @@
 import 'package:split_trip/core/sizer/app_size.dart';
 import 'package:flutter/material.dart';
+import 'package:split_trip/services/ads/action_interstitial_service.dart';
 
 class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -48,6 +49,8 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
                   onBack ??
                   () {
                     FocusManager.instance.primaryFocus?.unfocus();
+                    // ← tapped: the pop counts for the back interstitial.
+                    ActionInterstitialService.markBackIntent();
 
                     Navigator.maybePop(context);
                   },

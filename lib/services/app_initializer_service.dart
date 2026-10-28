@@ -8,8 +8,11 @@ import 'package:split_trip/modules/Settings/controller/currency_controller.dart'
 // import 'package:split_trip/data/service/notification_service.dart';
 import 'package:split_trip/data/service/shared_preferences_service.dart';
 import 'package:split_trip/firebase_options.dart';
+import 'package:split_trip/services/ads/ad_cache_manager.dart';
+import 'package:split_trip/services/ads/app_open_ad_service.dart';
 import 'package:split_trip/services/analytics/analytics_service.dart';
 import 'package:split_trip/services/auth/google_auth_service.dart';
+import 'package:split_trip/services/firebase/remote_config_service.dart';
 import 'package:split_trip/services/install/app_install_service.dart';
 
 class AppInitializerService {
@@ -50,6 +53,14 @@ class AppInitializerService {
       },
     );
 
+    // Ad frequencies: cached values now, fresh fetch in the background.
+    await _initializeStep(
+      name: "Remote Config",
+      action: () async {
+        await RemoteConfigService.init();
+      },
+    );
+
     await _initializeStep(
       name: "Google Auth Service",
       action: () async {
@@ -75,6 +86,23 @@ class AppInitializerService {
       name: "Shared Preferences",
       action: () async {
         await Get.putAsync(() => SharedPreferencesService().init());
+      },
+    );
+
+    // Central banner / native cache — loads nothing until a widget asks.
+    await _initializeStep(
+      name: "Ad Cache Manager",
+      action: () async {
+        Get.put(AdCacheManager().init(), permanent: true);
+      },
+    );
+
+    // Starts the AdMob SDK (not awaited — must never block the first frame).
+    // Shows nothing until AppOpenAdService.onMainScreenOpened() is called.
+    await _initializeStep(
+      name: "App Open Ad Service",
+      action: () async {
+        Get.putAsync(() => AppOpenAdService().init(), permanent: true);
       },
     );
 

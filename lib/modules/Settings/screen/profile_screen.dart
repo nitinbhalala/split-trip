@@ -12,6 +12,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:split_trip/data/service/image_picker_service.dart';
 import 'package:split_trip/modules/Settings/controller/profile_controller.dart';
+import 'package:split_trip/services/ads/ad_unit_ids.dart';
+import 'package:split_trip/services/ads/banner_or_native_ad_widget.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -112,6 +114,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       appBar: CommonAppBar(title: "Edit Profile", showBackButton: true),
+      // Banner (native if the banner fails) at the bottom of the screen.
+      bottomNavigationBar: BannerOrNativeAdWidget(
+        bannerAdUnitId: AdUnitIds.profileBanner,
+        nativeAdUnitId: AdUnitIds.profileNative,
+        bannerPlacementId: 'profile_banner',
+        nativePlacementId: 'profile_banner_fallback_native',
+      ),
       body: SafeArea(
         bottom: true,
         top: false,

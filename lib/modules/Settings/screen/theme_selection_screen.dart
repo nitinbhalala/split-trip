@@ -6,9 +6,29 @@ import 'package:split_trip/core/theme/app_color.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:split_trip/core/theme/theme_controller.dart';
+import 'package:split_trip/services/ads/action_interstitial_service.dart';
+import 'package:split_trip/services/ads/ad_unit_ids.dart';
+import 'package:split_trip/services/ads/banner_or_native_ad_widget.dart';
 
-class ThemeSelectionScreen extends StatelessWidget {
+// class ThemeSelectionScreen extends StatelessWidget {
+//   const ThemeSelectionScreen({super.key});
+class ThemeSelectionScreen extends StatefulWidget {
   const ThemeSelectionScreen({super.key});
+
+  @override
+  State<ThemeSelectionScreen> createState() => _ThemeSelectionScreenState();
+}
+
+class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> {
+  /// Blocks a 2nd theme tap while the 1st one's ad is showing.
+  bool _changingTheme = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Loads the theme-change interstitial while the user picks a theme.
+    ActionInterstitialService.prepareThemeChange();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +61,13 @@ class ThemeSelectionScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: const CommonAppBar(title: "Select Theme", showBackButton: true),
+      // Banner (native if the banner fails) at the bottom of the screen.
+      bottomNavigationBar: BannerOrNativeAdWidget(
+        bannerAdUnitId: AdUnitIds.themeBanner,
+        nativeAdUnitId: AdUnitIds.themeNative,
+        bannerPlacementId: 'theme_banner',
+        nativePlacementId: 'theme_banner_fallback_native',
+      ),
       body: Obx(() {
         final currentMode = themeController.themeMode;
 
@@ -99,7 +126,16 @@ class ThemeSelectionScreen extends StatelessWidget {
                           size: AppSize.sp(22),
                         )
                       : null,
-                  onTap: () {
+                  // onTap: () {
+                  onTap: () async {
+                    if (_changingTheme) return;
+                    _changingTheme = true;
+                    // Interstitial first (only for a different theme), then
+                    // the theme is applied.
+                    if (!isSelected) {
+                      await ActionInterstitialService.onThemeChange();
+                      if (!mounted) return;
+                    }
                     themeController.changeTheme(mode);
                     Get.back();
                     AppSnackbar.success(

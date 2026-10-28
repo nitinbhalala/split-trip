@@ -5,7 +5,7 @@ description: "A new Flutter project."
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 
-version: 1.0.1+12
+version: 1.0.1+13
 
 environment:
   sdk: ^3.11.0
@@ -20,7 +20,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   get: ^4.7.3
   shared_preferences: ^2.5.5
-  in_app_update: ^4.2.5
+  # in_app_update: ^4.2.5
   sqflite: ^2.4.3
    # Google Sign-In and Google APIs dependencies(backup data to google drive)
   google_sign_in: ^7.2.0
@@ -48,6 +48,10 @@ dependencies:
   flutter_svg: ^2.3.0
   syncfusion_flutter_charts: ^34.2.2
   package_info_plus: ^10.2.1
+  # Ads (AdMob + Meta mediation) and ad frequencies from Remote Config
+  google_mobile_ads: ^9.0.0
+  firebase_remote_config: ^6.7.1
+  gma_mediation_meta: ^1.7.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

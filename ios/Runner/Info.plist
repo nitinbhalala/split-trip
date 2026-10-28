@@ -81,5 +81,45 @@
 	</array>
 	<key>GIDClientID</key>
 	<string>582158608949-h38g652q973onj7ot6tkunh883vq6ol4.apps.googleusercontent.com</string>
+
+	<!-- Camera (profile / group picture) -->
+	<key>NSCameraUsageDescription</key>
+	<string>This app requires access to your camera to capture profile and group pictures.</string>
+
+	<!-- Photo Library -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app requires access to your photo library to pick profile and group pictures.</string>
+
+	<!-- ========================================= -->
+	<!-- Google Mobile Ads -->
+	<!-- ========================================= -->
+
+	<!-- AdMob App ID (Split Trip, iOS).
+	     TODO: replace the Google test App ID below with Split Trip's real one. -->
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-3940256099942544~1458002511</string>
+
+	<!-- Google + Meta SKAdNetwork -->
+	<key>SKAdNetworkItems</key>
+	<array>
+
+		<!-- Google -->
+		<dict>
+			<key>SKAdNetworkIdentifier</key>
+			<string>cstr6suwn9.skadnetwork</string>
+		</dict>
+
+		<!-- Meta Audience Network -->
+		<dict>
+			<key>SKAdNetworkIdentifier</key>
+			<string>v9wttpbfk9.skadnetwork</string>
+		</dict>
+
+		<dict>
+			<key>SKAdNetworkIdentifier</key>
+			<string>n38lu8286q.skadnetwork</string>
+		</dict>
+
+	</array>
 </dict>
 </plist>

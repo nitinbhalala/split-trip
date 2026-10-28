@@ -101,6 +101,11 @@ class SharedPreferencesService extends GetxService {
   String get userProfileImagePath => getString(PrefKeys.userProfileImagePath);
   Future<bool> setUserProfileImagePath(String value) => setString(PrefKeys.userProfileImagePath, value);
 
+  bool get isDailyAutoBackupEnabled =>
+      getBool(PrefKeys.dailyAutoBackupEnabled, defaultValue: false);
+  Future<bool> setDailyAutoBackupEnabled(bool value) =>
+      setBool(PrefKeys.dailyAutoBackupEnabled, value);
+
   bool get useDummyData => getBool(PrefKeys.useDummyData, defaultValue: false);
   Future<bool> setUseDummyData(bool value) => setBool(PrefKeys.useDummyData, value);
 }

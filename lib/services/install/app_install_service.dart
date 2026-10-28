@@ -4,13 +4,14 @@ import 'dart:math';
 
 import 'package:split_trip/data/service/pref_keys.dart';
 import 'package:split_trip/data/service/shared_preferences_service.dart';
+import 'package:split_trip/services/ads/ad_unit_ids.dart';
 import 'package:split_trip/services/install/device_info_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 /// Reports a new install to the app panel once (Android and iOS).
 ///
-/// Skipped in debug builds. A failed call saves
+/// Skipped in debug builds and while test ads are on. A failed call saves
 /// nothing, so it is retried on the next app start.
 class AppInstallService {
   AppInstallService._internal();
@@ -23,10 +24,15 @@ class AppInstallService {
 
   /// Calls POST /app-installs once when app installs or first opens.
   Future<void> trackAppInstall() async {
-    if (kDebugMode) {
+    // if (kDebugMode) {
+    //   debugPrint(
+    //     '[AppInstallService] ℹ️ Install tracking skipped '
+    //     '(debug build).',
+    //   );
+    if (kDebugMode || AdUnitIds.testAds) {
       debugPrint(
         '[AppInstallService] ℹ️ Install tracking skipped '
-        '(debug build).',
+        '(debug/test ads enabled).',
       );
       return;
     }

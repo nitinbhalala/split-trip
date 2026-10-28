@@ -12,6 +12,9 @@ import 'package:split_trip/modules/Group/controller/group_controller.dart';
 import 'package:split_trip/modules/Group/controller/group_detail_controller.dart';
 import 'package:split_trip/modules/Group/screen/widgets/add_people_bottom_sheet.dart';
 import 'package:split_trip/modules/Group/screen/widgets/create_group_bottom_sheet.dart';
+import 'package:split_trip/services/ads/ad_unit_ids.dart';
+import 'package:split_trip/services/ads/banner_or_native_ad_widget.dart';
+import 'package:split_trip/services/ads/delete_group_ad.dart';
 
 class GroupInfoScreen extends StatefulWidget {
   final GroupModel group;
@@ -136,6 +139,8 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
         TextButton(
           onPressed: () async {
             Get.back();
+            // Interstitial first; the group is deleted after it closes.
+            await DeleteGroupAd.showBeforeDelete();
             final groupController = Get.isRegistered<GroupController>()
                 ? Get.find<GroupController>()
                 : Get.put(GroupController());
@@ -149,7 +154,13 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
               AppSnackbar.error(message: "Failed to delete group.");
             }
           },
-          child: Text(
+          // child: Text(
+          //   "Delete",
+          //   style: Theme.of(
+          //     context,
+          //   ).textTheme.labelLarge?.copyWith(color: AppColors.error),
+          // ),
+          child: DeleteGroupAd.label(
             "Delete",
             style: Theme.of(
               context,
@@ -170,6 +181,9 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
         backgroundColor: theme.scaffoldBackgroundColor,
         title: "",
         enableBottomBorder: false,
+        // CommonAppBar's own ← (not Flutter's implied one) so the back
+        // counts for the back interstitial (`splittrip_back`).
+        showBackButton: true,
       ),
       body: SafeArea(
         bottom: true,
@@ -400,6 +414,13 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
             ],
           ),
         ),
+      ),
+      // Banner (native if the banner fails) at the bottom of the screen.
+      bottomNavigationBar: BannerOrNativeAdWidget(
+        bannerAdUnitId: AdUnitIds.groupInfoBanner,
+        nativeAdUnitId: AdUnitIds.groupInfoNative,
+        bannerPlacementId: 'group_info_banner',
+        nativePlacementId: 'group_info_banner_fallback_native',
       ),
     );
   }

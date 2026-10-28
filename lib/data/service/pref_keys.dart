@@ -18,4 +18,14 @@ class PrefKeys {
   // Install report (AppInstallService).
   static const installId = "install_id";
   static const appInstallCalled = "app_install_called";
+
+  // Daily Auto Backup (off by default, turned on with a rewarded ad).
+  static const dailyAutoBackupEnabled = "daily_auto_backup_enabled";
+  // Opens counted for the one-time "turn on Daily Auto Backup?" popup.
+  static const dailyAutoBackupSuggestOpens = "daily_auto_backup_suggest_opens";
+  static const dailyAutoBackupSuggested = "daily_auto_backup_suggested";
+
+  // Ad counters (AppOpenAdService): cold starts and returns from recents.
+  static const appLaunchCount = "app_launch_count";
+  static const recentsReturnCount = "recents_return_count";
 }

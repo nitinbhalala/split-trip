@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:split_trip/services/ads/action_interstitial_service.dart';
 import 'package:split_trip/core/common/divider/app_divider.dart';
 import 'package:split_trip/core/common/helper/app_helper.dart';
 import 'package:split_trip/core/common/widgets/app_alert_dialog.dart';
@@ -118,7 +119,12 @@ class _ExpenseDetailScreenState extends State<ExpenseDetailScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: AppSize.sp(20)),
-          onPressed: () => Get.back(),
+          // onPressed: () => Get.back(),
+          onPressed: () {
+            // ← tapped: the pop counts for the back interstitial.
+            ActionInterstitialService.markBackIntent();
+            Get.back();
+          },
         ),
         actions: [
           IconButton(

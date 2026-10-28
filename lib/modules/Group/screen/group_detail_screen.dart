@@ -11,6 +11,8 @@ import 'package:split_trip/modules/Group/controller/group_detail_controller.dart
 import 'package:split_trip/modules/Group/screen/widgets/add_people_bottom_sheet.dart';
 import 'package:split_trip/modules/Group/screen/widgets/group_detail_app_bar.dart';
 import 'package:split_trip/modules/Group/screen/widgets/group_detail_widgets.dart';
+import 'package:split_trip/services/ads/ad_unit_ids.dart';
+import 'package:split_trip/services/ads/banner_or_native_ad_widget.dart';
 
 class GroupDetailScreen extends StatefulWidget {
   final GroupModel group;
@@ -99,20 +101,34 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
       // Pinned Bottom Bar (Only visible on Chat Tab - Index 0)
       bottomNavigationBar: SafeArea(
         bottom: true,
-        child: AnimatedBuilder(
-          animation: _tabController.animation ?? _tabController,
-          builder: (context, _) {
-            final double animVal =
-                _tabController.animation?.value ??
-                _tabController.index.toDouble();
-            if (animVal < 0.5) {
-              return Padding(
-                padding: AppSize.symmetric(horizontal: 100, vertical: 10),
-                child: _buildBottomBar(theme),
-              );
-            }
-            return const SizedBox.shrink();
-          },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedBuilder(
+              animation: _tabController.animation ?? _tabController,
+              builder: (context, _) {
+                final double animVal =
+                    _tabController.animation?.value ??
+                    _tabController.index.toDouble();
+                if (animVal < 0.5) {
+                  return Padding(
+                    padding: AppSize.symmetric(horizontal: 100, vertical: 10),
+                    child: _buildBottomBar(theme),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+            // Banner (native if the banner fails) under the bottom bar,
+            // touching the bottom. Kept on both tabs so swiping tabs never
+            // reloads it.
+            BannerOrNativeAdWidget(
+              bannerAdUnitId: AdUnitIds.groupDetailBanner,
+              nativeAdUnitId: AdUnitIds.groupDetailNative,
+              bannerPlacementId: 'group_detail_banner',
+              nativePlacementId: 'group_detail_banner_fallback_native',
+            ),
+          ],
         ),
       ),
     );
@@ -152,7 +168,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
               onEditTap: () => _openEditExpenseScreen(msg, meta),
             );
           } else {
-            return TextChatBubbleWidget(msg: msg  );
+            return TextChatBubbleWidget(msg: msg);
           }
         },
       );
@@ -209,11 +225,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen>
   ) {
     Get.toNamed(
       AppRoutes.expenseDetail,
-      arguments: {
-        'msg': msg,
-        'meta': meta,
-        'controller': _controller,
-      },
+      arguments: {'msg': msg, 'meta': meta, 'controller': _controller},
     );
   }
 

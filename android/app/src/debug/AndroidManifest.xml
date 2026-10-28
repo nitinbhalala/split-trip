@@ -11,5 +11,9 @@
         <meta-data
             android:name="install_tracker.enabled"
             android:value="false" />
+        <!-- Debug builds send no Analytics (keeps ad_impression revenue clean). -->
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="false" />
     </application>
 </manifest>

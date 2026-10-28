@@ -5,6 +5,7 @@ import 'package:split_trip/core/const/app_string.dart';
 import 'package:split_trip/core/router/app_routes.dart';
 import 'package:split_trip/core/sizer/app_size.dart';
 import 'package:split_trip/core/theme/app_theme.dart';
+import 'package:split_trip/services/ads/action_interstitial_service.dart';
 import 'package:split_trip/services/analytics/analytics_service.dart';
 import 'package:split_trip/services/app_initializer_service.dart';
 
@@ -13,7 +14,7 @@ import 'core/theme/theme_controller.dart';
 void main() async {
     await AppInitializerService.initialize();
 
-  // WidgetsFlutterBinding.ensureInitialized();
+  // WidgetsFlutterBinding.ensureInitialized();`
   // SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   // SystemChrome.setSystemUIOverlayStyle(
   //   const SystemUiOverlayStyle(
@@ -35,6 +36,8 @@ void main() async {
   // await Get.putAsync(() => SharedPreferencesService().init());
 
   // Get.put(ThemeController(), permanent: true);
+  // Back interstitial (`splittrip_back`): hooks system back before runApp.
+  ActionInterstitialService.instance.init();
   runApp(const MyApp());
 }
 
@@ -61,7 +64,11 @@ class MyApp extends StatelessWidget {
       initialRoute: AppPages.intialRoute,
       initialBinding: InitialBinding(),
       getPages: AppPages.pages,
-      navigatorObservers: [AnalyticsService.observer],
+      // navigatorObservers: [AnalyticsService.observer],
+      navigatorObservers: [
+        AnalyticsService.observer,
+        ActionInterstitialService.navigatorObserver,
+      ],
       // home: SplashScreen(),
     );
   }
